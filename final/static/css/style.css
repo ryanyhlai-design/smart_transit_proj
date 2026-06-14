@@ -1,0 +1,1046 @@
+/* ==================== Japanese Light Theme Design System ==================== */
+:root {
+    /* 核心無印風調色盤 */
+    --bg-primary: #FAF6EF;           /* 暖白底色 */
+    --bg-secondary: #FFFFFF;         /* 純白底色 */
+    --bg-card: #FFFFFF;              /* 卡片背景 */
+    
+    /* 柔和點綴色 */
+    --accent-main: #7EB5B3;          /* 莫蘭迪青/台鐵色 */
+    --accent-orange: #C9896F;        /* 柿子橘/高鐵色 */
+    
+    /* 文字色彩 */
+    --text-primary: #5A5550;         /* 深灰褐 (主要文字) */
+    --text-secondary: #8A857F;       /* 淺灰褐 (次要文字) */
+    --text-muted: #A9A5A0;           /* 淺灰 (提示字元) */
+    --border-color: #EAEAEA;         /* 邊框線條 */
+
+    /* 佈局尺寸 */
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+}
+
+/* ==================== Base & Reset ==================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #D1D5DB transparent;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* 自訂捲軸 */
+::-webkit-scrollbar { width: 8px; height: 8px; background: transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; border: 2px solid #F3F4F6; }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
+
+/* 互動元件游標設定 */
+button, select, input[type="date"], input[type="time"], input[type="number"], a, .interactive-hotspot, .route-card, .train-row-card {
+    cursor: pointer;
+}
+
+/* ==================== Header Navigation ==================== */
+.header {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    padding: 16px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Logo */
+.logo-wrapper { display: flex; align-items: baseline; gap: 8px; }
+.logo-main {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+.logo-EN {
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+/* 右側狀態列 */
+.header-right { display: flex; align-items: center; gap: 20px; }
+#user-status-block { display: flex; align-items: center; font-size: 14px; }
+#user-status-block span { color: var(--text-primary); }
+#user-status-block b { color: var(--accent-orange); margin-left: 4px; }
+
+.system-status { display: flex; gap: 10px; align-items: center; }
+.status-pill {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.status-dot.tra { background: var(--accent-main); }
+.status-dot.thsr { background: var(--accent-orange); }
+
+.login-btn, .logout-btn {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+}
+.login-btn:hover, .logout-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--accent-main);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .header { padding: 12px 16px; }
+    .logo-main { font-size: 1.2rem; }
+    .logo-EN { display: none; }
+    .system-status { display: none; } /* 手機版隱藏連線狀態以節省空間 */
+}
+
+/* ==================== Main Layout & Cards ==================== */
+.main-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 30px auto;
+    padding: 0 24px;
+    align-items: start;
+}
+@media (min-width: 1024px) {
+    .main-content { grid-template-columns: 1fr 1.1fr; }
+}
+
+.live-board-section, .control-panel-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-right: 12px;
+    padding-bottom: 40px;
+}
+
+.station-board, .search-panel, .illustration-container {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    position: relative;
+}
+
+.board-title {
+    color: var(--accent-main);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #F0F0F0;
+}
+
+/* ==================== Search Panel & Hitbox Magic ==================== */
+.search-box .input-group {
+    background: #F9F9F9;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+}
+
+.search-box .input-group:not(.station-input-group) {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 14px;
+    min-height: 64px;
+    box-sizing: border-box;
+}
+
+.search-box .input-group:hover, .station-input-group:hover {
+    border-color: var(--accent-main);
+    background: #FFFFFF;
+}
+.search-box .input-group:focus-within {
+    border-color: #5A8E8D;
+    background: #FFFFFF;
+}
+
+/* Label 與文字穿透 */
+.search-box .input-label {
+    position: relative;
+    z-index: 5;
+    pointer-events: none;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #000000;
+    margin-bottom: 6px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+.search-box .input-group:focus-within .input-label { color: var(--accent-main); }
+.input-display { color: var(--text-primary); font-size: 1.1rem; font-weight: bold; }
+
+/* 統一輸入框樣式 (透明化並擴大 Hitbox) */
+.search-box input, .search-box select, .search-box select option {
+    color: #1A1A1A;
+    font-weight: 500;
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    margin: 0;
+}
+.search-box select option { background: #FFFFFF; padding: 10px 0; }
+
+.search-box select, .search-box input[type="number"] {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+}
+.search-box select { padding: 28px 14px 4px 14px; appearance: none; }
+.search-box input[type="number"] { padding: 26px 14px 4px 14px; font-family: 'JetBrains Mono', monospace; }
+.search-box input[type="date"], .search-box input[type="time"] { position: relative; z-index: 10; height: 26px; line-height: 26px; width: 100%; }
+.search-box input[type="date"]::-webkit-calendar-picker-indicator, .search-box input[type="time"]::-webkit-calendar-picker-indicator {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+}
+
+.search-box .input-arrow {
+    position: absolute; right: 14px; bottom: 15px; pointer-events: none;
+    color: var(--text-muted); font-size: 10px; transition: color 0.2s ease;
+}
+.search-box .input-group:focus-within .input-arrow { color: var(--accent-main); }
+
+.station-input-group {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    cursor: pointer;
+}
+.station-input-group .input-label { margin-bottom: 0; margin-right: 16px; }
+.station-input-group .input-display { flex: 1; }
+.station-input-group .input-arrow { position: static; margin-left: 16px; }
+
+/* 搜尋按鈕 */
+.search-btn {
+    width: 100%;
+    background: var(--accent-main);
+    color: #FFFFFF;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    letter-spacing: 2px;
+    transition: all 0.2s ease;
+}
+.search-btn:hover {
+    background: #5A8E8D;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(113, 169, 168, 0.2);
+}
+.reset-btn {
+    margin-top: 15px; width: 100%; padding: 12px;
+    background: transparent; border: 1px solid var(--accent-main);
+    color: var(--accent-main); border-radius: 8px; font-weight: bold;
+    transition: all 0.2s ease;
+}
+.reset-btn:hover { background: rgba(113, 169, 168, 0.05); }
+
+/* ==================== Route Results & Timeline ==================== */
+.route-results-container { display: none; width: 100%; flex-direction: column; gap: 16px; }
+.route-results-container.active { display: flex; }
+
+.results-header-container {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
+}
+.results-header-container h3 { color: var(--text-primary); margin: 0; font-weight: 900; }
+
+.sort-control select {
+    background: #FFFFFF; color: var(--text-primary); border: 1px solid var(--border-color);
+    padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold;
+    appearance: auto;
+}
+.sort-control select:hover { border-color: var(--accent-main); color: var(--accent-main); }
+
+.route-card {
+    background: #FFFFFF; border-radius: 12px; border: 1px solid var(--border-color);
+    padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); transition: all 0.2s ease;
+}
+.route-card:hover { border-color: var(--accent-main); transform: translateY(-2px); }
+.route-card.selected-route-card {
+    background: rgba(113, 169, 168, 0.05); border-color: var(--accent-main);
+}
+
+.route-summary {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px dashed var(--border-color); padding-bottom: 16px; margin-bottom: 16px;
+}
+.summary-price { font-size: 28px; font-family: 'JetBrains Mono', monospace; color: var(--accent-orange); font-weight: 700; }
+.summary-time { font-size: 14px; color: var(--text-primary); margin-top: 4px; }
+.transfer-badge { background: #F0F0F0; color: var(--text-secondary); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
+.route-timeline { padding-left: 8px; }
+.timeline-step { position: relative; padding-left: 24px; padding-bottom: 16px; border-left: 2px solid var(--border-color); }
+.timeline-step:last-child { border-left: 2px solid transparent; padding-bottom: 0; }
+.timeline-step::before {
+    content: ''; position: absolute; left: -7px; top: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #FFFFFF; border: 2px solid var(--accent-main);
+}
+.step-train-title { font-size: 14px; color: var(--text-primary); font-weight: bold; margin-bottom: 4px; }
+.step-details { font-size: 13px; color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; }
+
+/* ==================== Live Board (List) ==================== */
+.train-list { display: flex; flex-direction: column; gap: 10px; }
+.train-row-card {
+    display: flex; align-items: center; padding: 14px;
+    background: #FFFFFF; border: 1px solid var(--border-color); border-radius: 8px;
+}
+.train-time { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; width: 75px; color: var(--text-primary); }
+.train-meta { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.train-meta-top { display: flex; align-items: center; gap: 8px; }
+.badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; background: #F0F0F0; color: var(--text-secondary); }
+.train-no { font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); font-size: 13px; }
+.station-dest { font-weight: 700; font-size: 1rem; color: var(--text-primary); }
+.train-delay {
+    font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; font-weight: 700; flex-shrink: 0;
+}
+.on-time-pill { background: rgba(113, 169, 168, 0.1); color: var(--accent-main); }
+.delayed-pill { background: rgba(201, 137, 111, 0.1); color: var(--accent-orange); }
+
+/* ==================== Map Wrapper ==================== */
+#taiwan-map-wrapper { display: none; margin-top: 20px; }
+.map-title { color: var(--accent-main); font-size: 14px; margin-bottom: 10px; font-weight: bold; }
+
+/* ==================== Station Picker Modal ==================== */
+.station-picker-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 99999; }
+.station-picker-modal.active { display: block; }
+.station-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(8px); }
+
+.station-picker-container {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 90%; max-width: 900px; height: 80vh; background: #FFFFFF;
+    border: 1px solid var(--border-color); border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08); display: flex; flex-direction: column; z-index: 100000; overflow: hidden;
+}
+
+.picker-header { background: var(--bg-primary); border-bottom: 1px solid var(--border-color); padding: 15px 24px; display: flex; justify-content: space-between; align-items: center; }
+.picker-title { color: var(--text-primary); margin: 0; font-size: 1.1rem; font-weight: 700; }
+.picker-close { background: #EAEAEA; border: none; border-radius: 50%; width: 28px; height: 28px; color: var(--text-secondary); display: flex; justify-content: center; align-items: center; }
+.picker-close:hover { background: #DDDDDD; color: var(--text-primary); }
+
+.picker-search { padding: 12px 24px; border-bottom: 1px solid var(--border-color); }
+.picker-search-input { width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 8px; outline: none; }
+.picker-search-input:focus { border-color: var(--accent-main); }
+
+.picker-body { display: flex; flex: 1; overflow: hidden; }
+.picker-lines { width: 30%; border-right: 1px solid var(--border-color); overflow-y: auto; padding: 12px; }
+.picker-stations { width: 70%; overflow-y: auto; padding: 20px; }
+
+.line-item { background: #FFFFFF; border: 1px solid var(--border-color); padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; align-items: center; gap: 10px; transition: 0.2s ease; }
+.line-item:hover { border-color: var(--accent-main); background: var(--bg-primary); }
+.line-item.active { background: rgba(201, 137, 111, 0.08); border-color: var(--accent-orange); }
+.line-item.active .line-name { color: var(--accent-orange); font-weight: bold; }
+.line-name { color: var(--text-primary); font-size: 14px; }
+.line-img { width: 18px; height: 18px; }
+
+.station-line-title { color: var(--accent-orange); border-bottom: 1px dashed rgba(201, 137, 111, 0.3); padding-bottom: 6px; margin-bottom: 12px; font-weight: bold; font-size: 0.95rem; }
+.station-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.station-chip { background: #FFFFFF; color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; font-size: 13px; transition: all 0.2s ease; }
+.station-chip:hover { border-color: var(--accent-main); color: var(--accent-main); background: var(--bg-primary); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+
+/* RWD for Modal */
+@media (max-width: 600px) {
+    .picker-body { flex-direction: column; }
+    .picker-lines { width: 100%; max-height: 120px; border-right: none; border-bottom: 1px solid var(--border-color); display: flex; overflow-x: auto; overflow-y: hidden; }
+    .line-item { flex-shrink: 0; margin-bottom: 0; margin-right: 8px; }
+    .picker-stations { width: 100%; }
+}
+
+/* ==================== Auth Modal / Illustration Container ==================== */
+/* 💡 讓登入外層容器支援動畫變形與淡出效果 */
+.auth-login-overlay {
+    /* 確保容器在狀態改變時，能以高質感的貝茲曲線進行 0.9 秒的轉場 */
+    transition: transform 0.9s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.9s ease !important;
+}
+
+/* 💡 新增：當布幕加上 .exit 類別時，觸發往上滑出螢幕與透明度歸零 */
+.auth-login-overlay.exit {
+    transform: translateY(-100%);
+    opacity: 0;
+}
+
+/* 💡 新增：當被加上 .active 時，觸發慢慢浮現 */
+.auth-login-overlay.active {
+    opacity: 1;
+}
+
+/* 登入中間的白卡片框 - 初始狀態（往下壓 20px） */
+.auth-content-wrapper {
+    transform: translateY(20px);
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 💡 新增：當外層激活時，卡片優雅地回彈到原位 */
+.auth-login-overlay.active .auth-content-wrapper {
+    transform: translateY(0);
+}
+
+.responsive-bg-img { width: 100%; height: auto; display: block; border-radius: 12px; }
+/* 讓左側面板與內部的白底卡片自動撐滿高度，與右側等高 */
+.live-board-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+}
+
+.search-box {
+    display: flex;
+    flex-direction: column;
+    flex: 1; 
+    height: 100%;
+}
+
+#search-form-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* 確保按鈕被推到最底部 */
+.search-btn {
+    margin-top: auto !important; 
+}
+/* 請將這段程式碼加進 index.html 的 <style> 標籤內 */
+
+/* 💡 1. 重新設計介紹頁的最外層背景（智慧路網極簡科技風） */
+#intro-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* 使用系統雙主色渲染出對角線微光，並疊加細緻的地圖路網方格線 */
+    background-color: #fcfcfc;
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(126, 181, 179, 0.15) 0px, transparent 55%),
+        radial-gradient(at 100% 100%, rgba(201, 137, 111, 0.15) 0px, transparent 55%),
+        linear-gradient(to right, rgba(90, 85, 80, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(90, 85, 80, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 50px 50px, 50px 50px; /* 方格大小 */
+    
+    transition: transform 0.9s cubic-bezier(0.85, 0, 0.15, 1);
+}
+
+/* 💡 2. 改造主標題字體：現代歐風無襯線與漸層字色 */
+.intro-title {
+    font-family: 'Inter', 'Noto Sans TC', sans-serif;
+    font-size: 52px;
+    font-weight: 900;              /* 極粗體 */
+    letter-spacing: -1.5px;         /* 緊縮字距，呈現現代 SaaS 產品的高級感 */
+    background: linear-gradient(135deg, #5A5550 30%, #C9896F 100%);
+    -webkit-background-clip: text;  /* 將漸層套用到文字上 */
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 12px;
+}
+
+/* 💡 3. 改造副標題字體：人文氣質與大字距排版 */
+.intro-subtitle {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #7EB5B3;                /* 系統核心青嶺綠 */
+    letter-spacing: 8px;           /* 刻意拉寬字距，形成沉穩的視覺對比 */
+    margin-bottom: 50px;
+    text-indent: 8px;              /* 修正因字距拉寬導致的置中偏斜 */
+}
+
+/* 💡 4. 優化底下的介紹卡片，讓它在網格背景上更立體、有通透感 */
+.intro-card {
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(234, 234, 234, 0.8);
+    backdrop-filter: blur(10px);   /* 微毛玻璃效果 */
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(90, 85, 80, 0.04);
+    transition: all 0.3s ease;
+}
+
+.intro-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 12px 40px rgba(126, 181, 179, 0.12);
+}
+
+/* 💡 新增：布幕拉開時的舞台退場動畫 */
+.intro-fade-out {
+    /* 💡 向上拉出螢幕範圍 (100%) */
+    transform: translateY(-100%) !important;
+    
+    /* 💡 拉起時，下邊緣的陰影加深，讓「與後方介面重疊」的立體感更明顯 */
+    box-shadow: 0 20px 40px rgba(90, 85, 80, 0.15) !important;
+    
+    pointer-events: none !important; 
+}
+.intro-content { text-align: center; max-width: 800px; padding: 20px; }
+.intro-features { display: flex; gap: 20px; margin: 40px 0; justify-content: center; }
+
+/* 核心進場動畫：由下往上浮出並淡入 */
+@keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(40px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* 設定卡片與按鈕的依序延遲時間 */
+.intro-card { 
+    opacity: 0; 
+    animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; 
+    background: #fff; padding: 20px; border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex: 1; 
+}
+.intro-card.f-1 { animation-delay: 0.2s; }
+.intro-card.f-2 { animation-delay: 0.6s; }
+.intro-card.f-3 { animation-delay: 1.0s; }
+
+#start-app-btn {
+    opacity: 0; 
+    animation: fadeInUp 0.8s ease forwards; 
+    animation-delay: 1.5s; /* 等所有功能介紹完再出現 */
+    padding: 14px 32px; font-size: 18px; font-weight: bold; cursor: pointer;
+    background: #7EB5B3; color: white; border: none; border-radius: 30px;
+    transition: transform 0.2s, background 0.2s;
+}
+#start-app-btn:hover { background: #6AA19F; transform: scale(1.05); }
+/* 💡 新增/修改：預設先將整個主程式介面隱藏，避免未登入前閃爍 */
+.foreground-ui-layer {
+    display: none;
+}
+/* 💡 加上這段：就算裡面 UI 隱藏了，外殼依然要維持全螢幕高度來顯示背景 GIF */
+.smart-transit-app {
+    min-height: 100vh;
+    width: 100%;
+    /* 確保這層沒有不小心被加上 display: none */
+    display: block !important; 
+}
+/* 💡 調整介紹卡片內的說明文字大小與排版 */
+.intro-card p {
+    font-size: 14px;      /* 將字體縮小 (您可以依喜好改成 13px 或 15px) */
+    line-height: 1.6;     /* 稍微拉開行距，讓長句子閱讀起來更舒服 */
+    color: #8A857F;       /* 換成稍微柔和的灰色，讓視覺焦點留在標題上 */
+    margin: 0;            /* 清除預設邊距 */
+}
+
+/* 💡 順便優化一下卡片標題，讓它跟底下的文字更有層次 */
+.intro-card h3 {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 18px;      /* 標題大小 */
+    font-weight: 900;
+    color: #5A5550;
+    margin-top: 16px;     /* 標題與上方圖標的距離 */
+    margin-bottom: 10px;  /* 標題與下方說明文字的距離 */
+}
+/* 1. 專門控制「火車圖示 (包含全部、各台鐵路線)」的大小 */
+.line-img[src*="trainicon.png"] { 
+    width: 16px !important; 
+    height: 16px !important; 
+    object-fit: contain; 
+}
+
+    /* 2. 專門控制「高鐵圖示」的大小 */
+.line-img[src*="highspeedicon.png"] { 
+    width: 25px !important;  /* 這裡可以獨立把高鐵調大或改寬度 */
+    height: 13px !important; 
+    object-fit: contain; 
+}
+
+/* 從 JS 移至 HTML，減少執行時期的 DOM 操作 */
+.map-tooltip.leaflet-tooltip { background: rgba(255, 255, 255, 0.95) !important; border: 1px solid #EAEAEA !important; 
+    border-radius: 8px !important; padding: 10px 12px !important; font-size: 13px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; color: #5A5550 !important; }
+/* 💡 新增：iOS 風格設定開關 CSS */
+.ios-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+.ios-switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.ios-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #EAEAEA;
+    transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 26px;
+}
+.ios-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+input:checked + .ios-slider {
+    background-color: #7EB5B3;
+}
+input:checked + .ios-slider:before {
+    transform: translateX(22px);
+}
+/* ==========================================
+   💡 完整終極版：深色模式 (Dark Mode) 全面覆蓋樣式
+   ========================================== */
+
+/* 1. 基礎頁面與排版覆蓋 */
+body.dark-mode {
+    background-color: #141617 !important;
+    color: #E3E5E6 !important;
+}
+body.dark-mode .header {
+    background: #1A1D1E !important;
+    border-bottom: 1px solid #2D3133 !important;
+}
+
+/* 2. 字體顏色深度修正 */
+body.dark-mode .logo-main,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode #user-status-block span,
+body.dark-mode .train-time,
+body.dark-mode .station-dest,
+body.dark-mode .picker-title
+body.dark-mode .input-label {
+    color: #E3E5E6 !important;
+}
+
+/* 3. 設定面板修正 */
+body.dark-mode .text-block-compat {
+    background: transparent !important;
+}
+body.dark-mode .dark-mode-title {
+    color: #E3E5E6 !important;
+}
+body.dark-mode .dark-mode-desc {
+    color: #A0A5A8 !important;
+}
+
+/* 4. 微調台鐵與高鐵在深色下的文字色 (提高對比) */
+body.dark-mode .tra .train-no { color: #C9896F !important; }
+body.dark-mode .thsr .train-no { color: #7EB5B3 !important; }
+body.dark-mode .train-meta .train-no { color: #A0A5A8 !important; }
+
+/* 5. 卡片、面板與彈出視窗 (防線全面碳灰化) */
+body.dark-mode .search-panel,
+body.dark-mode .search-box,
+body.dark-mode .station-board,
+body.dark-mode #random-slot-machine,
+body.dark-mode .station-picker-container,
+body.dark-mode .auth-content-wrapper,
+body.dark-mode .route-card,
+body.dark-mode .map-tooltip.leaflet-tooltip {
+    /* 把背景調得更深，幾乎融入外層黑底 */
+    background: #181A1B !important; 
+    
+    /* 弱化邊框，甚至你可以直接設為 transparent 來完全消除邊框 */
+    border-color: #232628 !important; 
+    
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important;
+    color: #E3E5E6 !important;
+}
+
+/* 額外補充：解決截圖中那個綠色按鈕旁邊可能殘留白邊的問題 */
+body.dark-mode .search-btn {
+    border: none !important;
+}
+
+/* 額外補充：讓輸入框的圓角跟外層面板更搭 */
+body.dark-mode .input-group {
+    background: #202325 !important; /* 稍微比外殼亮一點點的黑，營造層次 */
+    border-color: #2D3133 !important;
+}
+
+/* 💡 6. 就是這裡漏掉了！輸入框、選單與動態卡片內頁的深色設定 */
+body.dark-mode .input-group,
+body.dark-mode .picker-search-input,
+body.dark-mode .train-row-card,
+body.dark-mode #random-slot-machine div {
+    background: #25282A !important; /* 深灰色底 */
+    border-color: #323739 !important;
+    color: #E3E5E6 !important; /* 白色字 */
+}
+
+/* 針對原生 input 與 select 的文字顏色與底色覆蓋 */
+body.dark-mode .input-display,
+body.dark-mode input,
+body.dark-mode select {
+    color: #E3E5E6 !important;
+    background: transparent !important;
+}
+body.dark-mode select option {
+    background-color: #1A1D1E !important;
+    color: #E3E5E6 !important;
+}
+
+/* 💡 徹底解決日期、時間等原生輸入框在深色模式下的顯示問題 */
+body.dark-mode input[type="date"],
+body.dark-mode input[type="time"],
+body.dark-mode select {
+    color: #E3E5E6 !important;
+    color-scheme: dark !important; /* 魔法屬性：強制瀏覽器喚出原生的深色 UI */
+}
+
+/* 針對頑固的 Chrome/Safari 內部時間佔位文字 (如 --:--) 強制上色 */
+body.dark-mode input::-webkit-datetime-edit-fields-wrapper,
+body.dark-mode input::-webkit-datetime-edit-text,
+body.dark-mode input::-webkit-datetime-edit-minute,
+body.dark-mode input::-webkit-datetime-edit-hour-field,
+body.dark-mode input::-webkit-datetime-edit-day-field,
+body.dark-mode input::-webkit-datetime-edit-month-field,
+body.dark-mode input::-webkit-datetime-edit-year-field,
+body.dark-mode input::-webkit-datetime-edit-ampm-field {
+    color: #E3E5E6 !important;
+}
+
+/* 💡 終極強制覆蓋：輸入框小標題與箭頭變白 */
+body.dark-mode .input-label,
+body.dark-mode .search-box .input-label,
+body.dark-mode .station-input-group .input-label {
+    color: #E3E5E6 !important;
+}
+
+/* 順便把右邊的下拉箭頭 ▼ 也調成淺灰色，才不會看不見 */
+body.dark-mode .input-arrow,
+body.dark-mode .search-box .input-arrow {
+    color: #A0A5A8 !important;
+}
+
+/* 預算上限的「例如: 2500」提示字也調亮 */
+body.dark-mode input::placeholder {
+    color: #8A857F !important;
+}
+/* 💡 右上角按鈕與狀態標籤的深色模式修正 */
+body.dark-mode .login-btn,
+body.dark-mode .logout-btn,
+body.dark-mode .status-pill {
+    background: #25282A !important;  /* 換成深灰色底 */
+    border-color: #323739 !important; /* 邊框也調暗 */
+    color: #E3E5E6 !important;       /* 文字變白色 */
+}
+
+/* 讓按鈕滑過 (Hover) 時也能維持高級的深色互動感 */
+body.dark-mode .login-btn:hover,
+body.dark-mode .logout-btn:hover {
+    background: #323739 !important;
+    border-color: #7EB5B3 !important; /* 邊框亮起莫蘭迪青色 */
+    color: #94C7C5 !important;
+}
+/* 💡 修正：設定介面與彈出視窗的標題列深色樣式 */
+body.dark-mode .picker-header {
+    background: #1A1D1E !important;
+    border-bottom: 1px solid #2D3133 !important;
+}
+
+body.dark-mode .picker-close {
+    background: #25282A !important;
+    color: #A0A5A8 !important;
+}
+
+body.dark-mode .picker-close:hover {
+    background: #323739 !important;
+    color: #E3E5E6 !important;
+}
+
+/* 確保虛線不會在深色模式下變成亮白色 */
+body.dark-mode #location-setting-row,
+body.dark-mode #dark-mode-setting-row {
+    border-bottom-color: #2D3133 !important;
+}
+/* ==========================================
+   💡 車站選擇器 (Station Picker) 深色模式修正
+   ========================================== */
+
+/* 1. 左側路線選單 (白底變深灰) */
+body.dark-mode .line-item {
+    background: #25282A !important;
+    border-color: #323739 !important;
+}
+body.dark-mode .line-item:hover {
+    background: #323739 !important;
+    border-color: #7EB5B3 !important;
+}
+body.dark-mode .line-item.active {
+    background: rgba(201, 137, 111, 0.15) !important; /* 選中時的橘色微光 */
+    border-color: #C9896F !important;
+}
+
+/* 左側文字變白色 */
+body.dark-mode .line-name {
+    color: #E3E5E6 !important;
+}
+body.dark-mode .line-item.active .line-name {
+    color: #C9896F !important; /* 選中時文字亮橘色 */
+}
+
+/* 2. 圖示 (Icon) 強制反轉為白色 */
+body.dark-mode .line-img {
+    filter: brightness(0) invert(1) !important; 
+}
+
+/* 3. 右側車站按鈕晶片 (Station Chips) */
+body.dark-mode .station-chip {
+    background: #25282A !important;
+    color: #E3E5E6 !important;
+    border-color: #323739 !important;
+}
+body.dark-mode .station-chip:hover {
+    background: rgba(126, 181, 179, 0.2) !important;
+    color: #94C7C5 !important;
+    border-color: #7EB5B3 !important;
+}
+
+/* 4. 搜尋框背景與文字修正 */
+body.dark-mode .picker-search {
+    border-bottom-color: #2D3133 !important;
+}
+body.dark-mode .picker-search-input {
+    background: #202325 !important;
+    border-color: #323739 !important;
+    color: #E3E5E6 !important;
+}
+body.dark-mode .picker-search-input::placeholder {
+    color: #8A857F !important;
+}
+body.dark-mode .picker-search-input:focus {
+    border-color: #7EB5B3 !important;
+}
+/* 從 JS 移至 HTML，減少執行時期的 DOM 操作 */
+.map-tooltip.leaflet-tooltip { background: rgba(255, 255, 255, 0.95) !important; border: 1px solid #EAEAEA !important; border-radius: 8px !important; padding: 10px 12px !important; font-size: 13px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; color: #5A5550 !important; }
+.map-tooltip.leaflet-tooltip::before { border-top-color: #EAEAEA !important; }
+.map-label { background: rgba(255, 255, 255, 0.85) !important; border: 1px solid #EAEAEA !important; color: #5A5550 !important; border-radius: 4px !important; padding: 2px 6px !important; font-size: 12px !important; font-weight: bold !important; box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important; }
+select option { color: #1A1A1A; }
+     
+/* 💡 改這裡：美化歷史紀錄的內部滾動條 (改針對內部容器) */
+.history-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.history-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+.history-scroll-area::-webkit-scrollbar-thumb {
+    background: #EAEAEA;
+    border-radius: 10px;
+}
+.history-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: #7EB5B3; /* 滑鼠移過去變成你們的主題綠色 */
+}
+    
+/* 徹底封印網頁最右側的全局滾動條，鎖死整體版面 */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden !important; /* 強制隱藏超出的部分與滾動條 */
+}
+
+ /* 確保 App 主容器不會撐破畫面 */
+.smart-transit-app {
+    height: 100vh;
+    box-sizing: border-box;
+}
+ /* 🌙 修正深色模式下的歷史卡片文字與邊框顏色 */
+body.dark-mode .train-row-card[data-fav="false"] .history-record-text {
+    color: #EAEAEA !important; /* 讓普通歷史紀錄的字體變成與其他介面相同的亮白色 */
+}
+body.dark-mode .train-row-card[data-fav="false"] {
+    border-left-color: #4A4A4A !important; /* 順便把左邊的淺灰線調暗，避免在深色模式太刺眼 */
+}
+        
+ /* 🛡️ 鎖定簡介畫面 (Intro) 的顏色，完全不受深色模式干擾 */
+body.dark-mode #intro-overlay .intro-title,
+    body.dark-mode #intro-overlay .intro-card h3 {
+    color: #5A5550 !important; /* 鎖死主標題為深棕灰色 */
+}
+body.dark-mode #intro-overlay .intro-subtitle {
+    color: #7EB5B3 !important; /* 鎖死副標題為主題綠色 */
+}
+body.dark-mode #intro-overlay .intro-card p {
+    color: #8A857F !important; /* 鎖死卡片敘述為淺灰色 */
+}
+body.dark-mode #intro-overlay .intro-card {
+    background: #FFFFFF !important; /* 確保卡片背景在深色模式下還是純白 */
+    border-color: #EAEAEA !important;
+}
+body.dark-mode #intro-overlay {
+    background-color: #FAFAFA !important; /* 確保整個簡介背景也是原本的淺色 */
+}
+/* ==========================================
+   🌙 深色模式專屬修正：轉乘明細區塊
+   ========================================== */
+
+/* 1. 將「搭乘 區間車 [1732]」這行標題改為純白色 */
+body.dark-mode .step-train-title {
+    color: #FFFFFF !important;
+}
+
+/* 2. 將「交通工具圖示 (火車/高鐵/小人)」利用濾鏡強制洗成純白色 */
+body.dark-mode .step-train-title img {
+    filter: brightness(0) invert(1) !important;
+}
+
+/* 3. 將下方的「六家 ➔ 新竹 | 區間花費 $0」明細改為柔和的白色 (避免純白太刺眼) */
+body.dark-mode .step-details {
+    color: #EAEAEA !important;
+}
+
+/* 4. 將被折疊時的「▼ 點擊展開 X 段轉乘明細」也改為柔和的白色 */
+body.dark-mode .expand-indicator div {
+    color: #EAEAEA !important;
+}
+/* 5. 將卡片上半部的「方案 1 | 耗時 2小時15分...」改為白色 */
+body.dark-mode .summary-time {
+    color: #EAEAEA !important;
+}
+
+/* 6. 將「方案 1」旁邊的那顆星星圖示反轉為白色 */
+body.dark-mode .summary-time img {
+    filter: brightness(0) invert(1) !important;
+}
+
+/* 7. 將「[決策分析]」區塊的文字改為白色 */
+body.dark-mode .cp-analysis-box {
+    color: #EAEAEA !important;
+}
+/* 8. 將設定選單中的圖示 (地球、定位、月亮、書本) 在深色模式下反轉為純白色 */
+body.dark-mode .dark-mode-title img {
+    filter: brightness(0) invert(1) !important;
+}
+/* 9. 將拉霸機 (骰子) 抽出來的車站名稱，在深色模式下強制改為純白色 */
+body.dark-mode #slot-text {
+    color: #FFFFFF !important;
+}
+/* 10. 將「X次轉乘/直達車」標籤在深色模式下改為白字，並搭配微透明暗底，提升質感 */
+body.dark-mode .transfer-badge {
+    color: #FFFFFF !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 11. 將「☆ 設為最愛」按鈕 (未收藏狀態) 強制改為白色，無視 JS 的行內樣式 */
+body.dark-mode .fav-toggle-btn[data-isfav="false"] {
+    color: #FFFFFF !important;
+    border-color: #FFFFFF !important;
+}
+/* 12. 將「早、省、直、快」標籤字體改為白色，並智慧加深背景顏色 */
+body.dark-mode .summary-price + span span {
+    color: #5A5550 !important; /* 恢復高質感的深灰色字體 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important; /* 改成外陰影，讓標籤有立體浮空感 */
+    border: none !important; /* 移除白邊框，保持乾淨 */
+}
+/* 當 body 帶有 dark-mode 類別時，將特定的圖示轉為白色 */
+body.dark-mode .dark-invert {
+    filter: brightness(0) invert(1);
+}
+.intro-card {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    cursor: pointer;
+}
+.intro-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 12px 24px rgba(126, 181, 179, 0.15) !important;
+    border-color: #7EB5B3 !important;
+}
+/* 修正：當瀏覽器視窗縮小時，強制允許整頁出現上下與左右滾動條 */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    /* 關鍵：主體外框超出時自動顯示滾輪，並維持網頁原本的底色（可依據深色模式微調） */
+    overflow: auto !important; 
+}
+
+.smart-transit-app {
+    /* 確保容器可以根據內容無限向右、向下延伸，而不會被強行擠壓 */
+    min-width: 1200px; /* 💡 建議值：設定系統在不崩壞情況下的最小寬度上限 */
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+}
+
+/* 為了優化縮小後的視覺體驗，確保頂部 Header 不會跟著縮水變形 */
+.header {
+    width: 100%;
+    min-width: 1200px; /* 與主體最小寬度同步 */
+    box-sizing: border-box;
+}
+
+/* 確保地圖區塊在縮小時不會產生版面擠壓破裂 */
+#taiwan-map-wrapper {
+    width: 100%;
+    overflow: hidden;
+}
+/* ==========================================
+   🌙 深色模式下的「標籤圖例文字」顏色
+   ========================================== */
+body.dark-mode .legend-container {
+    color: #EAEAEA !important; /* 強制改成與標題相同的亮白色 */
+}

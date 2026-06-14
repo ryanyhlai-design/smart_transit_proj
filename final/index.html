@@ -1,0 +1,2912 @@
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Transit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" href="/static/images/Day Waiting GIF by Rafael.gif" as="image">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css?v=1007">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="icon" href="/static/images/logoicon.png" type="image/png">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+    <div id="intro-overlay"style="display: none;">
+        <div class="intro-content">
+            <h1 class="intro-title">Smart Transit</h1>
+            <p class="intro-subtitle" data-i18n="intro-sub">您的全台智慧轉乘最佳解方</p>
+            
+            <div class="intro-features">
+                <div class="intro-card f-1">
+                    <div class="icon">
+                        <img src="/static/images/barcharticon.png" alt="多運具整合排班" style="width: 46px; height: 46px; object-fit: contain; vertical-align: middle;">
+                    </div>
+                    <h3 data-i18n="feat-1-title">多運具整合排班</h3>
+                    <p data-i18n="feat-1-desc">台鐵、高鐵一鍵排程，客製化計算最佳方案。</p>
+                </div>
+                
+                <div class="intro-card f-2">
+                    <div class="icon">
+                        <img src="/static/images/diceicon.png" alt="隨機探索功能" style="width: 44px; height: 44px; object-fit: contain; vertical-align: middle;">
+                    </div>
+                    <h3 data-i18n="feat-2-title">隨機探索功能</h3>
+                    <p data-i18n="feat-2-desc">不知道去哪？讓拉霸機與骰子為您隨機挑選全台目的地！</p>
+                </div>
+                
+                <div class="intro-card f-3">
+                    <div class="icon">
+                        <img src="/static/images/mapicon.png" alt="即時地圖軌跡" style="width: 46px; height: 46px; object-fit: contain; vertical-align: middle;">
+                    </div>
+                    <h3 data-i18n="feat-3-title">即時地圖軌跡</h3>
+                    <p data-i18n="feat-3-desc">直觀的互動式台灣地圖，清晰動態繪製專屬乘車路線圖。</p>
+                </div>
+            </div>
+            
+            <button id="start-app-btn" onclick="enterApp()" data-i18n="btn-start">開始體驗</button>
+        </div>
+    </div>
+    <script>
+        // 預設是隱藏的，只有「當前分頁沒看過」的訪客，我們才把它打開
+        if (sessionStorage.getItem('introSeen') !== 'true') { // 💡 改成 sessionStorage
+            document.getElementById('intro-overlay').style.display = 'flex'; 
+        }
+    </script>
+    <div class="smart-transit-app">
+        <div class="foreground-ui-layer" style="display: none;">
+
+            <header class="header">
+                <div class="header-content">
+                    <div class="logo-group">
+                        <div class="logo-wrapper" onclick="resetSearchForm()" style="cursor: pointer; display: flex; align-items: center; gap: 12px;">
+    
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="38" height="38">
+                                <defs>
+                                    <linearGradient id="transit-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#7EB5B3" />
+                                        <stop offset="100%" stop-color="#C9896F" />
+                                    </linearGradient>
+                                </defs>
+                                
+                                <rect width="40" height="40" rx="10" fill="rgba(126, 181, 179, 0.08)"/>
+                                
+                                <path d="M 12 28 C 12 16, 28 24, 28 12" stroke="url(#transit-grad)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+                                
+                                <circle cx="12" cy="28" r="4.5" fill="#7EB5B3" stroke="#FFF" stroke-width="2"/>
+                                
+                                <circle cx="28" cy="12" r="4.5" fill="#C9896F" stroke="#FFF" stroke-width="2"/>
+                                
+                                <path d="M 18.5 15.5 L 19.5 19 L 23 20 L 19.5 21 L 18.5 24.5 L 17.5 21 L 14 20 L 17.5 19 Z" fill="#5A5550"/>
+                            </svg>
+
+                            <div style="display: flex; flex-direction: column; justify-content: center;">
+                                <span class="logo-main" data-i18n="logo-main" style="color: #5A5550; font-size: 22px; font-weight: 900; letter-spacing: 2px; line-height: 1.1; font-family: 'Noto Sans TC', sans-serif;">智慧轉乘</span>
+                                <span class="logo-EN" style="color: #C9896F; font-size: 10px; letter-spacing: 3.5px; font-weight: bold; font-family: 'Inter', sans-serif;">SMART TRANSIT</span>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="header-right" style="display: flex; align-items: center; gap: 20px;">
+                        <div id="user-status-block" style="display: flex; align-items: center; gap: 15px; font-family: 'Noto Sans TC', sans-serif; font-size: 14px;"></div>
+                        
+                        <div class="system-status" style="display: flex; gap: 10px;">
+                            <a href="https://www.railway.gov.tw/tra-tip-web/tip/tip001/tip121/query" target="_blank" class="status-pill" data-i18n="link-tra-book" style="text-decoration: none; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                                <span class="status-dot tra"></span>台鐵訂票
+                            </a>
+                            <a href="https://irs.thsrc.com.tw/" target="_blank" class="status-pill" data-i18n="link-thsr-book" style="text-decoration: none; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                                <span class="status-dot thsr"></span>高鐵訂票
+                            </a>
+                        </div>
+
+                        <div id="settings-btn" onclick="openSettings()" style="cursor: pointer; font-size: 20px; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0deg)'" title="系統設定">
+                            ⚙️
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="main-content">
+                
+                <section class="live-board-section">     
+                    <div class="search-panel">
+                        <div class="search-box">
+                            
+                            <div id="search-form-container">
+                                
+                                <div class="input-group station-input-group" onclick="openStationPicker('origin')" style="position: relative;">
+                                    <div class="input-label" data-i18n="lbl-origin">起點</div>
+                                    <div class="input-display" id="origin-display">請選擇起點車站</div>
+                                    <input type="hidden" id="origin" name="origin">
+                                    
+                                    <button type="button" data-i18n="btn-nearest" onclick="event.stopPropagation(); findNearestStation(event);" style="position: absolute; right: 40px; top: 50%; transform: translateY(-50%); background: rgba(126, 181, 179, 0.1); border: 1px solid rgba(126, 181, 179, 0.5); color: #7EB5B3; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; transition: all 0.2s; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onmouseover="this.style.background='rgba(126, 181, 179, 0.2)'; this.style.borderColor='#7EB5B3';" onmouseout="this.style.background='rgba(126, 181, 179, 0.1)'; this.style.borderColor='rgba(126, 181, 179, 0.5)';">
+                                        📍 附近車站
+                                    </button>
+                                    
+                                    <span class="input-arrow">▼</span>
+                                </div>
+                                <div style="display: flex; justify-content: center; margin: -10px 0 10px 0; z-index: 2; position: relative;">
+                                    <button type="button" onclick="swapStations()" style="background: #fff; border: 1px solid #EAEAEA; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; color: #7EB5B3; font-size: 18px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onmouseover="this.style.transform='rotate(180deg) scale(1.1)';" onmouseout="this.style.transform='rotate(0deg) scale(1)';">
+                                        ⇅
+                                    </button>
+                                </div>
+                                <div class="input-group station-input-group" onclick="openStationPicker('destination')">
+                                    <div class="input-label" data-i18n="lbl-dest">終點</div>
+                                    <div class="input-display" id="destination-display">請選擇終點車站</div>
+                                    <input type="hidden" id="destination" name="destination">
+                                    <span class="input-arrow">▼</span>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                    <div class="input-group" style="flex: 1; position: relative;">
+                                        <div class="input-label" data-i18n="lbl-date">出發日期</div>
+                                        <input type="date" id="departure-date" style="width: 100%;">
+                                    </div>
+                                    
+                                    <div class="input-group" style="flex: 1; position: relative;">
+                                        <div class="input-label" data-i18n="lbl-time">出發時間</div>
+                                        <input type="time" id="departure-time" style="width: 100%;">
+                                    </div>
+                                    <div class="input-group" style="flex: 1; position: relative;">
+                                        <div class="input-label" data-i18n="lbl-latest">最晚出發時間</div>
+                                        <input type="time" id="latest-time" style="width: 100%;">
+                                    </div>
+                                    <div class="input-group" style="flex: 1; position: relative;">
+                                        <div class="input-label" data-i18n="lbl-role">身分</div>
+                                        <select id="role-select" style="width: 100%;">
+                                            <option value="6" data-i18n="opt-role-6">普通票</option>
+                                            <option value="1" data-i18n="opt-role-1">孩童票</option>
+                                            <option value="2" data-i18n="opt-role-2">中小學生票</option>
+                                            <option value="3" data-i18n="opt-role-3">大學生票</option>
+                                            <option value="4" data-i18n="opt-role-4">敬老票</option>
+                                            <option value="5" data-i18n="opt-role-5">身心障礙票</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                                    <div class="input-group" style="flex: 1; position: relative;">
+                                        <div class="input-label" data-i18n="lbl-pref">非共構站轉乘偏好</div>
+                                        <select id="transfer-pref" style="width: 100%;">
+                                            <option value="ALL" data-i18n="opt-pref-all" data-i18n="opt-pref-all">皆可 (系統自動最佳化)</option>
+                                            <option value="BUS" data-i18n="opt-pref-bus">僅大眾運輸 (公車)</option>
+                                            <option value="TAXI" data-i18n="opt-pref-taxi">僅計程車</option>
+                                        </select>
+                                        <span class="input-arrow">▼</span>
+                                    </div>
+
+                                    <div class="input-group" style="flex: 1; position: relative;">
+                                        <div class="input-label" data-i18n="lbl-budget">預算上限 (元)</div>
+                                        
+                                        <label style="position: absolute; top: 12px; right: 15px; font-size: 12px; font-weight: bold; cursor: pointer; color: #7EB5B3; display: flex; align-items: center; gap: 4px; z-index: 50;">
+                                            <input type="checkbox" id="no-budget-limit" onchange="toggleBudgetInput()" style="cursor: pointer; width: 14px; height: 14px; margin: 0;"> 
+                                            <span data-i18n="lbl-no-limit">無預算上限</span>
+                                        </label>
+
+                                        <input type="number" id="budget-limit" style="width: 100%; color: #1A1A1A;" value="3000" placeholder="例如: 2500">
+                                    </div>
+                                </div>
+                                
+                                <button class="search-btn" onclick="handleSearchSubmit()" data-i18n="btn-search">開始轉乘計算</button>
+                            </div>
+                            
+                            <div id="taiwan-map-wrapper" style="display: none;">
+                                <div class="map-title" data-i18n="map-title">最佳路徑模擬掃描</div>
+                                <div id="real-map" style="height: 400px; width: 100%; border-radius: 8px; z-index: 1;"></div>
+                                <button class="reset-btn" onclick="resetSearchForm()" data-i18n="btn-reset">↺ 再找一筆</button>
+                            </div>
+                        </div> 
+                    </div>
+                </section>
+                
+                <section class="control-panel-section">
+                    <div id="top-boards-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%;">
+                        
+                        <div class="station-board">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h2 class="board-title" style="margin: 0;" data-i18n="board-history">捷徑與歷史路線</h2>
+                                <button onclick="clearAllHistory()" data-i18n="btn-clear"style="background: transparent; border: none; color: #A9A5A0; font-size: 12px; cursor: pointer; text-decoration: underline; transition: color 0.2s;" onmouseover="this.style.color='#C9896F';" onmouseout="this.style.color='#A9A5A0';">
+                                    清除歷史
+                                </button>
+                            </div>
+                            <div id="quick-suggestions-board" class="train-list" style="display: flex; flex-direction: column; gap: 10px;">
+                                <div style="color: #A9A5A0; font-size: 13px; text-align: center; padding: 10px;">載入中...</div>
+                            </div>
+                        </div>
+
+                        <div class="station-board">
+                            <h2 class="board-title">
+                                <span data-i18n="board-live">即時班次看板</span>：<span id="live-board-station">民雄</span>
+                            </h2>
+                            <div id="real-live-board" class="train-list" style="display: flex; flex-direction: column; gap: 10px;">
+                                <div data-i18n="live-loading" style="color: #A9A5A0; font-size: 13px; text-align: center; padding: 10px;">連線台鐵即時動態中...</div>
+                            </div>
+                        </div>
+                    </div> 
+                    <div id="random-slot-machine" style="margin-top: 15px; width: 100%; padding: 24px; background: #FFFFFF; border-radius: 16px; border: 1px solid #EAEAEA; box-shadow: 0 4px 12px rgba(0,0,0,0.04); text-align: center;">
+                        <h3 id="slot-title" data-i18n="slot-title"style="margin: 0 0 12px 0; font-size: 15px; font-weight: 800; color: #5A5550; letter-spacing: 1px;">今天不知道去哪嗎？</h3>
+                        <div style="background: #F8F9F9; padding: 10px 15px; border-radius: 10px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid #EAEAEA;">
+                            <span id="slot-text"data-i18n="slot-text" style="font-size: 18px; font-weight: 700; color: #7EB5B3; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: inline-block;">
+                                點擊右下角骰子，讓命運為你決定目的地！
+                            </span>
+                        </div>
+                    </div>
+                </section>
+                
+            </main>
+
+        </div>
+        
+        <div id="station-picker-modal" class="station-picker-modal">
+            <div class="station-picker-overlay" onclick="closeStationPicker()"></div>
+            <div class="station-picker-container">
+                <div class="picker-header">
+                    <h3 class="picker-title" data-i18n="modal-station">選擇車站</h3>
+                    <button class="picker-close" onclick="closeStationPicker()">×</button>
+                </div>
+
+                <div class="picker-search">
+                    <input type="text" class="picker-search-input" id="station-search" data-i18n-placeholder="ph-search" placeholder="搜尋車站..." oninput="filterStations()">
+                </div>
+                
+                <div class="picker-body">
+                    <div class="picker-lines" id="picker-lines-container"></div>
+                    <div class="picker-stations" id="picker-stations"></div>
+                </div>
+            </div>
+        </div>
+        <div id="settings-modal" class="station-picker-modal">
+            <div class="station-picker-overlay" onclick="closeSettings()"></div>
+            <div class="station-picker-container" style="max-height: 80vh; max-width: 400px; padding: 0;"> <div class="picker-header" style="padding: 15px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
+                    <h3 class="picker-title" data-i18n="modal-setting" style="margin: 0; font-size: 1.1rem; font-weight: 700;">系統設定</h3>
+                    <button class="picker-close" onclick="closeSettings()">×</button>
+                </div>
+                
+                <div class="settings-body" style="padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <div class="setting-item">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 15px;" class="dark-mode-title" data-i18n="set-lang">🌐 語言設定 (Language)</div>
+                        <select id="lang-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #EAEAEA; font-size: 14px; outline: none; cursor: pointer;" onchange="saveLanguage()">
+                            <option value="zh-TW">繁體中文</option>
+                            <option value="en" data-i18n="opt-lang-en">English</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px dashed #EAEAEA;" id="location-setting-row">
+                        <div class="text-block-compat" style="padding: 4px; border-radius: 4px;">
+                            <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px;" class="dark-mode-title" data-i18n="set-loc">📍 允許存取位置資訊</div>
+                            <div style="font-size: 12px;" class="dark-mode-desc" data-i18n="set-loc-desc">開啟後可用於自動定位最近的車站</div>
+                        </div>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="location-toggle" onchange="handleLocationToggle()">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 24px; border-bottom: 1px dashed #EAEAEA;" id="dark-mode-setting-row">
+                        <div class="text-block-compat" style="padding: 4px; border-radius: 4px;">
+                            <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px;" class="dark-mode-title" data-i18n="set-dark">🌙 深色模式 (Dark Mode)</div>
+                            <div style="font-size: 12px;" class="dark-mode-desc" data-i18n="set-dark-desc">切換沉浸式深色佈景主題</div>
+                        </div>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="darkmode-toggle" onchange="handleDarkModeToggle()">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-item">
+                        <div style="font-weight: bold; margin-bottom: 10px; font-size: 15px;" class="dark-mode-title" data-i18n="set-guide">📖 系統導覽</div>
+                        <button onclick="replayIntro()" data-i18n="btn-replay" style="width: 100%; padding: 14px; border-radius: 8px; background: rgba(126, 181, 179, 0.1); color: #7EB5B3; border: 1px solid #7EB5B3; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 14px;" onmouseover="this.style.background='rgba(126, 181, 179, 0.2)';" onmouseout="this.style.background='rgba(126, 181, 179, 0.1)';">
+                            重新觀看功能簡介
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSearchRoutes = [];
+        let currentOriginName = '';
+        let currentDestName = '';
+        let DYNAMIC_COORDS = {};
+        let REAL_SHAPES = { thsr: [] }; // 💡 [上策] 儲存真實高鐵軌跡陣列
+        const API_BASE = window.location.origin + "/smart-transfer-system";
+        let STATION_LINES = {};
+        let ALL_STATIONS = [];
+        let CURRENT_PICKER_TARGET = '';
+        
+        function showLoginScreen() {
+            let loginModal = document.getElementById('auth-login-modal');
+            if (!loginModal) {
+                loginModal = document.createElement('div');
+                loginModal.id = 'auth-login-modal';
+                loginModal.className = 'auth-login-overlay';
+
+                // 💡 放在布幕 (10000) 的正下方 (9999)，且一開始透明度就是 1 (讓 GIF 直接顯示)
+                loginModal.style.position = 'fixed';
+                loginModal.style.top = '0';
+                loginModal.style.left = '0';
+                loginModal.style.width = '100vw';
+                loginModal.style.height = '100vh';
+                loginModal.style.zIndex = '9999'; 
+                loginModal.style.display = 'flex';
+                loginModal.style.alignItems = 'center';
+                loginModal.style.justifyContent = 'center';
+                loginModal.style.opacity = '1'; 
+
+                // 背景 GIF 與漸層覆蓋
+                loginModal.style.backgroundImage = "linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url('./static/images/Day Waiting GIF by Rafael.gif')";
+                loginModal.style.backgroundSize = "cover";
+                loginModal.style.backgroundPosition = "center";
+                loginModal.style.backgroundRepeat = "no-repeat";
+
+                // 💡 讓中間的白框先隱藏 (opacity: 0, translateY: 20px)，等布幕拉開後再浮現，營造空間感
+                loginModal.innerHTML = `
+                    <div class="auth-content-wrapper" style="background: rgba(255, 255, 255, 0.9); padding: 50px 60px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); text-align: center; backdrop-filter: blur(8px); opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);">
+                        <h2 style="color: #5A5550; font-family: 'Noto Sans TC', sans-serif; font-size: 32px; font-weight: 900; margin-bottom: 8px; letter-spacing: 3px;">智慧轉乘</h2>
+                        <p style="color: #C9896F; font-size: 12px; letter-spacing: 4px; margin-bottom: 35px; text-transform: uppercase;">SMART TRANSIT</p>
+                        <p style="color: #8A857F; margin-bottom: 40px; font-size: 15px;" data-i18n="auth-title">請選擇您的使用方式</p>
+                        
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                            <button onclick="handleGoogleLogin()" style="padding:16px 24px; font-size:16px; font-weight:bold; cursor:pointer; background:#FFFFFF; color:#5A5550; border:1px solid #EAEAEA; border-radius:12px; transition:all 0.3s ease; box-shadow:0 4px 12px rgba(0,0,0,0.05); display:flex; flex-direction:column; align-items:center; gap:8px;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <span style="font-size: 20px; display: flex; align-items: center; gap: 8px;"data-i18n="auth-google">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" style="width: 22px; height: 22px;">
+                                    Google 帳號登入
+                                </span>
+                                <span style="font-size: 13px; font-weight:normal; color:#A9A5A0;" data-i18n="auth-google-desc">跨裝置同步最愛路線與歷史紀錄</span>
+                            </button>
+                            <button onclick="handleGuestLogin()" style="padding:16px 24px; font-size:16px; font-weight:bold; cursor:pointer; background:#FFFFFF; color:#5A5550; border:1px solid #EAEAEA; border-radius:12px; transition:all 0.3s ease; box-shadow:0 4px 12px rgba(0,0,0,0.05); display:flex; flex-direction:column; align-items:center; gap:8px;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                                <span style="font-size: 20px;" data-i18n="auth-guest">👤 訪客直接使用</span>
+                                <span style="font-size: 13px; font-weight:normal; color:#A9A5A0;" data-i18n="auth-guest-desc">資料僅儲存於當前瀏覽器</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(loginModal);
+                const currentLang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+                applyLanguage(currentLang);
+            }
+            
+            loginModal.classList.remove('exit');
+            loginModal.style.display = 'flex';
+            loginModal.classList.add('active');
+
+            // 💡 關鍵：準備好會動的 GIF 背景後，才把最上層的布幕拉開！
+            const intro = document.getElementById('intro-overlay');
+            if (intro && intro.style.display !== 'none') {
+                requestAnimationFrame(() => {
+                    intro.classList.add('intro-fade-out');
+                    
+                    // 等布幕拉到一半 (約 300 毫秒)，再讓中間的白色選單框優雅地往上浮現
+                    setTimeout(() => {
+                        const content = loginModal.querySelector('.auth-content-wrapper');
+                        if (content) {
+                            content.style.opacity = '1';
+                            content.style.transform = 'translateY(0)';
+                        }
+                    }, 300);
+
+                    // 動畫結束後清掉布幕
+                    setTimeout(() => {
+                        intro.style.display = 'none';
+                    }, 950);
+                });
+            } else {
+                // 如果布幕早就被收掉了 (例如直接跳轉回來)，就直接讓白框顯示
+                const content = loginModal.querySelector('.auth-content-wrapper');
+                if (content) {
+                    content.style.opacity = '1';
+                    content.style.transform = 'translateY(0)';
+                }
+            }
+            applyLanguage(localStorage.getItem('smartTransitLang') || 'zh-TW');
+        }
+        // ==========================================
+        // 💡 系統設定與深色模式控制引擎 (多國語言升級版)
+        // ==========================================
+
+        const i18n = {
+            'zh-TW': {
+                // --- 搜尋表單 ---
+                'lbl-origin': '起點',
+                'lbl-dest': '終點',
+                'lbl-date': '出發日期',
+                'lbl-time': '出發時間',
+                'lbl-latest': '最晚出發時間',
+                'lbl-role': '身分',
+                'lbl-pref': '非共構站轉乘偏好',
+                'lbl-budget': '預算上限 (元)',
+                'lbl-no-limit': '無預算上限',
+                'btn-search': '開始轉乘計算',
+                'ph-origin': '請選擇起點車站',
+                'ph-dest': '請選擇終點車站',
+
+                // --- 下拉選單選項 ---
+                'opt-role-6': '普通票', 'opt-role-1': '孩童票', 'opt-role-2': '中小學生票', 'opt-role-3': '大學生票', 'opt-role-4': '敬老票', 'opt-role-5': '身心障礙票',
+                'opt-pref-all': '皆可 (系統自動最佳化)', 'opt-pref-bus': '僅大眾運輸 (公車)', 'opt-pref-taxi': '僅計程車',
+                'opt-lang-en': 'English',
+
+                // --- 導覽與標題 ---
+                'intro-sub': '您的全台智慧轉乘最佳解方',
+                'feat-1-title': '多運具整合排班',
+                'feat-1-desc': '台鐵、高鐵一鍵排程，客製化計算最佳方案。',
+                'feat-2-title': '隨機探索功能',
+                'feat-2-desc': '不知道去哪？讓拉霸機與骰子為您隨機挑選全台目的地！',
+                'feat-3-title': '即時地圖軌跡',
+                'feat-3-desc': '直觀的互動式台灣地圖，清晰動態繪製專屬乘車路線圖。',
+                'btn-start': '開始體驗',
+                'logo-main': '智慧轉乘',
+                'status-tra': '<span class="status-dot tra"></span>台鐵正常',
+                'status-thsr': '<span class="status-dot thsr"></span>高鐵正常',
+
+                // --- 面板與按鈕 ---
+                'btn-nearest': ' 附近車站',
+                'map-title': '最佳路徑模擬掃描',
+                'btn-reset': '↺ 再找一筆',
+                'board-history': '捷徑與歷史路線',
+                'btn-clear': '清除歷史',
+                'board-live': '即時班次看板',
+                'slot-title': '今天不知道去哪嗎？',
+                'slot-text': '點擊右下角骰子，讓命運為你決定目的地！',
+                'btn-searching': '轉乘計算中...',
+                // --- 彈窗 (Modals) ---
+                'modal-station': '選擇車站',
+                'ph-search': '搜尋車站...',
+                'modal-setting': '系統設定',
+                'set-lang': '<img src="/static/images/earthicon.png" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> 語言設定 (Language)',
+                'set-loc': '<img src="/static/images/localicon.png" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> 允許存取位置資訊', 
+                'set-dark': '<img src="/static/images/moonicon.png" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> 深色模式 (Dark Mode)',
+                'set-guide': '<img src="/static/images/bookicon.png" style="width: 22px; height: 22px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> 系統導覽',
+                'set-loc-desc': '開啟後可用於自動定位最近的車站',
+                'set-dark-desc': '切換沉浸式深色佈景主題',
+                'btn-replay': '重新觀看功能簡介',
+
+                // --- 登入與使用者狀態 ---
+                'status-guest': '👤 訪客模式',
+                'btn-login': '<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;">登入帳號',
+                'btn-logout': '登出系統',
+                'auth-title': '請選擇您的使用方式',
+                'auth-google': '<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" style="width: 22px; height: 22px; vertical-align: middle; margin-right: 8px;"> Google 帳號登入',
+                'auth-google-desc': '跨裝置同步最愛路線與歷史紀錄',
+                'auth-guest': '👤 訪客直接使用',
+                'auth-guest-desc': '資料僅儲存於當前瀏覽器',
+                // 在 'zh-TW' 的區塊裡面補上：
+                'live-ontime': '準點',
+                'live-delay': '晚 ',
+                'live-delay-suf': ' 分',
+                'live-dir-0': '順行',
+                'live-dir-1': '逆行',
+                'live-train-no': '車次',
+                'live-to': '往',
+                'live-none': '目前無近期列車進站',
+                'live-error': '連線台鐵伺服器失敗',
+                'history-none': '暫無紀錄，搜尋後將自動保存',
+                // 🔍 在 'zh-TW' 的區塊裡面補上：
+                'live-loading': '連線台鐵即時動態中...',
+                'slot-rolling-title': '尋找靈感中...',
+                'slot-result-title': '今天就去這!',
+                'dice-tooltip': '不知道去哪？擲骰子決定！',
+                'res-empty-title': '找不到符合條件的轉乘方案',
+                'res-empty-desc': '可能是因為預算設定過低、班次已過 or 無直達轉乘',
+                'res-back-btn': '← 返回修改搜尋條件',
+                'res-title': '最佳轉乘方案',
+                'res-sort-time': '依抵達時間排序 (最早優先)',
+                'res-sort-price': '依價格排序 (最省優先)',
+                'res-sort-transfers': '依轉乘次數 (直達優先)',
+                'res-sort-duration': '依總耗時排序 (最短優先)',
+                'res-analysis-tag': '[決策分析]',
+                'link-tra-book': '<span class="status-dot tra"></span>台鐵訂票',
+                'link-thsr-book': '<span class="status-dot thsr"></span>高鐵訂票',
+                'live-locating': ' 正在定位...',
+                'live-finding-nearest': '尋找離您最近的車站中...',
+                'origin-locating': ' 衛星定位中...',
+            },
+            'en': {
+                // --- 搜尋表單 ---
+                'lbl-origin': 'Origin',
+                'lbl-dest': 'Destination',
+                'lbl-date': 'Date',
+                'lbl-time': 'Time',
+                'lbl-latest': 'Latest Arr.',
+                'lbl-role': 'Ticket',
+                'lbl-pref': 'Transfer Pref.',
+                'lbl-budget': 'Budget (NTD)',
+                'lbl-no-limit': 'No Limit',
+                'btn-search': 'Search Routes',
+                'ph-origin': 'Select Origin',
+                'ph-dest': 'Select Destination',
+
+                // --- 下拉選單選項 ---
+                'opt-role-6': 'Standard', 'opt-role-1': 'Child', 'opt-role-2': 'Student', 'opt-role-3': 'College', 'opt-role-4': 'Senior', 'opt-role-5': 'Disability',
+                'opt-pref-all': 'Any (Auto Optimize)', 'opt-pref-bus': 'Bus Only', 'opt-pref-taxi': 'Taxi Only',
+                'opt-lang-en': 'English',
+
+                // --- 導覽與標題 ---
+                'intro-sub': 'Your Ultimate Taiwan Transit Solution',
+                'feat-1-title': 'Integrated Scheduling',
+                'feat-1-desc': 'One-click routing for TRA & THSR with optimized plans.',
+                'feat-2-title': 'Random Explorer',
+                'feat-2-desc': 'No idea where to go? Let the slot machine decide!',
+                'feat-3-title': 'Real-time Map',
+                'feat-3-desc': 'Interactive map drawing your customized route.',
+                'btn-start': 'Get Started',
+                'logo-main': 'Smart Transit',
+                'status-tra': '<span class="status-dot tra"></span>TRA Normal',
+                'status-thsr': '<span class="status-dot thsr"></span>THSR Normal',
+
+                // --- 面板與按鈕 ---
+                'btn-nearest': ' Nearby',
+                'map-title': 'Optimal Route Simulation',
+                'btn-reset': '↺ Search Again',
+                'board-history': 'Shortcuts & History',
+                'btn-clear': 'Clear History',
+                'board-live': 'Live Departure Board',
+                'slot-title': 'Don\'t know where to go?',
+                'slot-text': 'Click the dice to let fate decide your destination!',
+                'btn-searching': 'Calculating...',
+                // --- 彈窗 (Modals) ---
+                'modal-station': 'Select Station',
+                'ph-search': 'Search station...',
+                'modal-setting': 'Settings',
+                'set-lang': '<img src="/static/images/earthicon.png" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> Language',
+                'set-loc': '<img src="/static/images/localicon.png" style="width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> Allow Location Access',
+                'set-dark': '<img src="/static/images/moonicon.png" style="width: 24px; height: 24px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> Dark Mode',
+                'set-guide': '<img src="/static/images/bookicon.png" style="width: 22px; height: 22px; object-fit: contain; vertical-align: middle; margin-right: 6px;"> System Guide',
+                'set-loc-desc': 'Used to auto-locate the nearest station',
+                'set-dark-desc': 'Toggle immersive dark theme',
+                'btn-replay': 'Replay Intro',
+
+                // --- 登入與使用者狀態 ---
+                'status-guest': '👤 Guest Mode',
+                'btn-login': '<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 16px; height: 16px; margin-right: 6px; vertical-align: middle;">Login',
+                'btn-logout': 'Logout',
+                'auth-title': 'Choose How to Use',
+                'auth-google': '<img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" style="width: 22px; height: 22px; vertical-align: middle; margin-right: 8px;"> Login with Google',
+                'auth-google-desc': 'Sync favorites & history across devices',
+                'auth-guest': '👤 Continue as Guest',
+                'auth-guest-desc': 'Data saved only in current browser',
+                'live-ontime': 'On Time',
+                'live-delay': 'Delay ',
+                'live-delay-suf': 'm',
+                'live-dir-0': 'South',
+                'live-dir-1': 'North',
+                'live-train-no': 'Train',
+                'live-to': 'To',
+                'live-none': 'No upcoming trains',
+                'live-error': 'Connection failed',
+                'history-none': 'No records yet, saved automatically after search',
+                // 🔍 在 'en' 的區塊裡面補上：
+                'live-loading': 'Connecting to TRA Live Board...',
+                'slot-rolling-title': 'Looking for inspiration...',
+                'slot-result-title': 'Today we go here!',
+                'dice-tooltip': 'Don\'t know where to go? Roll the dice!',
+                'res-empty-title': 'No matching routes found',
+                'res-empty-desc': 'Try increasing your budget, adjusting the time, or checking for direct routes.',
+                'res-back-btn': '← Back to Search',
+                'res-title': 'Best Transit Routes',
+                'res-sort-time': 'Sort by Time (Earliest)',
+                'res-sort-price': 'Sort by Price (Lowest)',
+                'res-sort-transfers': 'Sort by Transfers (Direct)',
+                'res-sort-duration': 'Sort by Duration (Fastest)',
+                'res-analysis-tag': '[Analysis]',
+                'link-tra-book': '<span class="status-dot tra"></span>TRA Booking',
+                'link-thsr-book': '<span class="status-dot thsr"></span>THSR Booking',
+                'live-locating': ' Locating...',
+                'live-finding-nearest': 'Finding the nearest station...',
+                'origin-locating': ' Locating...',
+            }
+        };
+        // 🚉 全台鐵路與高鐵車站完整英文翻譯字典
+        const stationEnMap = {
+            // --- 高鐵車站 (THSR) ---
+            '左營': 'Zuoying', '雲林': 'Yunlin',
+
+            // --- 西部幹線：縱貫線北段 ---
+            '基隆': 'Keelung', '三坑': 'Sankeng', '八堵': 'Badu', '七堵': 'Qidu', 
+            '百福': 'Baifu', '五堵': 'Wudu', '汐止': 'Xizhi', '汐科': 'Xike', 
+            '南港': 'Nangang', '松山': 'Songshan', '台北': 'Taipei', '萬華': 'Wanhua', 
+            '板橋': 'Banqiao', '浮洲': 'Fuzhou', '樹林': 'Shulin', '南樹林': 'South Shulin', 
+            '山佳': 'Shanjia', '鶯歌': 'Yingge', '桃園': 'Taoyuan', '內壢': 'Neili', 
+            '中壢': 'Zhongli', '埔心': 'Puxin', '楊梅': 'Yangmei', '富岡': 'Fugang', 
+            '新富': 'Xinfu', '北湖': 'Beihu', '湖口': 'Hukou', '新豐': 'Xinfeng', 
+            '竹北': 'Zhubei', '北新竹': 'North Hsinchu', '新竹': 'Hsinchu', '三姓橋': 'Sanxingqiao', 
+            '香山': 'Xiangshan', '崎頂': 'Qiding', '竹南': 'Zhunan',
+
+            // --- 西部幹線：海線 (海岸線) ---
+            '談文': 'Tanwen', '大山': 'Dashan', '後龍': 'Houlong', '龍港': 'Longgang', 
+            '白沙屯': 'Baishatun', '新埔': 'Xinpu', '通霄': 'Tongxiao', '苑裡': 'Yuanli', 
+            '日南': 'Rinnan', '大甲': 'Dajia', '台中港': 'Taichung Port', '清水': 'Qingshui', 
+            '沙鹿': 'Shalu', '龍井': 'Longjing', '大肚': 'Dadu', '追分': 'Zhuifen',
+
+            // --- 西部幹線：山線 (台中線) ---
+            '造橋': 'Zaoqiao', '豐富': 'Fengfu', '苗栗': 'Miaoli', '南勢': 'Nanshi', 
+            '銅鑼': 'Tongluo', '三義': 'Sanyi', '泰安': 'Tai\'an', '后里': 'Houli', 
+            '豐原': 'Fengyuan', '栗林': 'Lilin', '潭子': 'Tanzi', '頭家厝': 'Toujiacuo', 
+            '松竹': 'Songzhu', '太原': 'Taiyuan', '精武': 'Jingwu', '台中': 'Taichung', 
+            '五權': 'Wuquan', '大慶': 'Daqing', '烏日': 'Wuri', '新烏日': 'Xinwuri', 
+            '成功': 'Chenggong', '彰化': 'Changhua',
+
+            // --- 西部幹線：縱貫線南段 ---
+            '花壇': 'Huatan', '大村': 'Dacun', '員林': 'Yuanlin', '永靖': 'Yongjing', 
+            '社頭': 'Shetou', '田中': 'Tianzhong', '二水': 'Ershui', '林內': 'Linnei', 
+            '石榴': 'Shiliu', '斗六': 'Douliu', '斗南': 'Dounan', '石龜': 'Shigui', 
+            '大林': 'Dalin', '民雄': 'Minxiong', '嘉北': 'Jiabei', '嘉義': 'Chiayi', 
+            '水上': 'Shuishang', '南靖': 'Nanjing', '後壁': 'Houbi', '新營': 'Xinying', 
+            '柳營': 'Liuying', '林鳳營': 'Linfengying', '隆田': 'Longtian', '拔林': 'Balin', 
+            '善化': 'Shanhua', '南科': 'Nanke', '新市': 'Xin市', '永康': 'Yongkang', 
+            '大橋': 'Daqiao', '台南': 'Tainan', '保安': 'Bao\'an', '仁德': 'Rende', 
+            '中洲': 'Zhongzhou', '大湖': 'Dahu', '路竹': 'Luzhu', '岡山': 'Gangshan', 
+            '橋頭': 'Qiaotou', '楠梓': 'Nanzi', '新左營': 'Xinzuoying', '左營': 'Zuoying', 
+            '內惟': 'Neiwei', '美術館': 'Museum of Fine Arts', '鼓山': 'Gushan', '三塊厝': 'Sankuaicuo', 
+            '高雄': 'Kaohsiung',
+
+            // --- 屏東線 ---
+            '民族': 'Minzu', '科工館': 'Science and Technology Museum', '正義': 'Zhengyi', '鳳山': 'Fengshan', 
+            '後庄': 'Houzhuang', '九曲堂': 'Jiuqutang', '六塊厝': 'Liukuaicuo', '屏東': 'Pingtung', 
+            '歸來': 'Guilai', '麟洛': 'Linluo', '西勢': 'Xishi', '竹田': 'Zhutian', 
+            '潮州': 'Chaozhou', '崁頂': 'Kanding', '南州': 'Nanzhou', '鎮安': 'Zhen\'an', 
+            '林邊': 'Linbian', '佳冬': 'Jiadong', '東海': 'Donghai', '枋寮': 'Fangliao',
+
+            // --- 南迴線 ---
+            '加祿': 'Jialu', '內獅': 'Neishi', '枋山': 'Fangshan', '大武': 'Dawu', 
+            '瀧溪': 'Longxi', '金崙': 'Jinlun', '太麻里': 'Taimali', '知本': 'Zhiben', 
+            '康樂': 'Kangle',
+
+            // --- 台東線 (花東線) ---
+            '吉安': 'Ji\'an', '志學': 'Zhixue', '平和': 'Pinghe', '壽豐': 'Shoufeng', 
+            '豐田': 'Fengtian', '林榮新光': 'Linrong Xinguang', '南平': 'Nanping', '鳳林': 'Fenglin', 
+            '萬榮': 'Wanrong', '光復': 'Guangfu', '大富': 'Dafu', '富源': 'Fuyuan', 
+            '瑞穗': 'Ruisui', '三民': 'Sanmin', '玉里': 'Yuli', '東里': 'Dongli', 
+            '東竹': 'Dongzhu', '富里': 'Fuli', '池上': 'Chishang', '海端': 'Haiduan', 
+            '關山': 'Guanshan', '瑞和': 'Ruihe', '瑞源': 'Ruiyuan', '鹿野': 'Luye', 
+            '山里': 'Shanli', '台東': 'Taitung',
+
+            // --- 北迴線 ---
+            '永樂': 'Yongle', '東澳': 'Dong\'ao', '南澳': 'Nan\'ao', '武塔': 'Wuta', 
+            '漢本': 'Hanben', '和平': 'Hoping', '和仁': 'Heren', '崇德': 'Chongde', 
+            '新城': 'Xincheng', '景美': 'Jingmei', '北埔': 'Beipu', '花蓮': 'Hualien',
+
+            // --- 宜蘭線 ---
+            '暖暖': 'Nuannuan', '四腳亭': 'Sijiaoting', '瑞芳': 'Ruifang', '猴硐': 'Houtong', 
+            '三貂嶺': 'Sandiaoling', '牡丹': 'Mudan', '雙溪': 'Shuangxi', '貢寮': 'Gongliao', 
+            '福隆': 'Fulong', '石城': 'Shicheng', '大里': 'Dali', '大溪': 'Daxi', 
+            '龜山': 'Guishan', '外澳': 'Wa\'ao', '頭城': 'Toucheng', '頂埔': 'Dingpu', 
+            '礁溪': 'Jiaoxi', '四城': 'Scheng', '宜蘭': 'Yilan', '二結': 'Erjie', 
+            '中里': 'Zhongli', '羅東': 'Luodong', '冬山': 'Dongshan', '新馬': 'Xinma', 
+            '蘇澳新': 'Suao New', '蘇澳': 'Suao',
+
+            // --- 平溪線 ---
+            '大華': 'Dahua', '十分': 'Shifen', '望古': 'Wanggu', '嶺腳': 'Lingjiao', 
+            '平溪': 'Pingxi', '菁桐': 'Jingtong',
+
+            // --- 深澳線 ---
+            '海科館': 'Haikeguan', '八斗子': 'Badouzi',
+
+            // --- 內灣線 ---
+            '千甲': 'Qianjia', '新莊': 'Xinzhuang', '竹中': 'Zhuzhong', '上員': 'Shangyuan', 
+            '榮華': 'Ronghua', '竹東': 'Zhudong', '橫山': 'Hengshan', '九讚頭': 'Jiuzantou', 
+            '合興': 'Hexing', '富貴': 'Fugui', '內灣': 'Neiwan',
+
+            // --- 集集線 ---
+            '源泉': 'Yuanquan', '濁水': 'Zhuoshui', '龍泉': 'Longquan', '集集': 'Jiji', 
+            '水里': 'Shuili', '車埕': 'Checheng',
+
+            // --- 沙崙線 ---
+            '長榮大學': 'Chang Jung Christian University', '沙崙': 'Shalun',
+
+            // --- 六家線 ---
+            '六家': 'Liujia'
+        };
+        // 🛤️ 路線名稱英文翻譯字典
+        const lineEnMap = {
+            '全部': 'All',
+            '高鐵': 'THSR',
+            '西部幹線-縱貫線(北段)': 'West Coast - North',
+            '西部幹線-台中線/山線': 'West Coast - Mountain',
+            '西部幹線-海岸線/海線': 'West Coast - Coast',
+            '西部幹線-縱貫線(南段)': 'West Coast - South',
+            '沙崙線': 'Shalun Line',
+            '六家線': 'Liujia Line',
+            '宜蘭線': 'Yilan Line',
+            '北迴線': 'North-Link Line',
+            '台東線/花東線': 'Taitung/Hualien Line',
+            '屏東線': 'Pingtung Line',
+            '南迴線': 'South-Link Line',
+            '平溪線': 'Pingxi Line',
+            '內灣線': 'Neiwan Line',
+            '集集線': 'Jiji Line',
+            '深澳線': 'Shen\'ao Line',
+            '其他': 'Others'
+        };
+        // 🌟 修正點 2：核心翻譯引擎緊接在字典後面
+        function applyLanguage(lang) {
+            document.documentElement.lang = (lang === 'en') ? 'en' : 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            
+            // 1. 替換一般文字與標籤 (使用 innerHTML 保留圖示結構)
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.innerHTML = dict[key];
+                }
+            });
+
+            // 2. 替換輸入框的 Placeholder
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (dict[key]) {
+                    el.placeholder = dict[key];
+                }
+            });
+            // ... (原本替換 Placeholder 的邏輯) ...
+
+            // 💡 4. 替換 title 屬性 (例如骰子的懸停提示)
+            document.querySelectorAll('[data-i18n-title]').forEach(el => {
+                const key = el.getAttribute('data-i18n-title');
+                if (dict[key]) {
+                    el.title = dict[key];
+                }
+            });
+
+            // ... (後面是你原本處理 searchBtn 等等區塊的邏輯) ...
+            // 3. 處理特殊的動態顯示區塊
+            const searchBtn = document.querySelector(".search-btn");
+            if (searchBtn && !searchBtn.disabled) searchBtn.textContent = dict['btn-search'];
+
+            const originDisplay = document.getElementById("origin-display");
+            if (originDisplay && !originDisplay.classList.contains('selected')) {
+                originDisplay.textContent = dict['ph-origin'];
+            }
+
+            const destDisplay = document.getElementById("destination-display");
+            if (destDisplay && !destDisplay.classList.contains('selected')) {
+                destDisplay.textContent = dict['ph-dest'];
+            }
+        }
+
+        // 1. 深色模式切換控制器
+        function handleDarkModeToggle() {
+            const isChecked = document.getElementById('darkmode-toggle').checked;
+            if (isChecked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('smartTransitDarkMode', 'true');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('smartTransitDarkMode', 'false');
+            }
+        }
+
+        // 2. 網頁載入時立刻檢查並套用主題與語言 (現在字典準備好了，絕對不會當機！)
+        (function applyThemeImmediately() {
+            const savedDarkMode = localStorage.getItem('smartTransitDarkMode') === 'true';
+            if (savedDarkMode) {
+                document.body.classList.add('dark-mode');
+                const darkToggle = document.getElementById('darkmode-toggle');
+                if (darkToggle) darkToggle.checked = true;
+            }
+            
+            // 💡 新增：在畫面渲染前，先決定看板的初始狀態！
+            const locSetting = localStorage.getItem('smartTransitLocation');
+            const stationSpan = document.getElementById('live-board-station');
+            const boardContainer = document.getElementById('real-live-board');
+            
+            if (locSetting !== 'false') {
+                // 🚀 有開定位：一開始就設定為「正在定位」，就不會閃過民雄
+                if (stationSpan) {
+                    stationSpan.setAttribute('data-i18n', 'live-locating');
+                    stationSpan.textContent = '📍 正在定位...';
+                }
+                if (boardContainer) {
+                    boardContainer.innerHTML = `<div data-i18n="live-finding-nearest" style="color: #7EB5B3; font-size: 13px; text-align: center; padding: 10px;">尋找離您最近的車站中...</div>`;
+                }
+            } else {
+                // 🛑 沒開定位：一開始就設定為「民雄」並等待字典翻譯
+                if (stationSpan) {
+                    stationSpan.setAttribute('data-i18n', 'default-station');
+                    stationSpan.textContent = '民雄';
+                }
+            }
+
+            // 最後才呼叫翻譯引擎，這樣它就會依照我們剛才設定的狀態完美翻譯
+            const savedLang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            applyLanguage(savedLang);
+        })();
+
+        // 3. 打開設定介面並同步開關狀態
+        function openSettings() {
+            try {
+                const savedLang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+                const savedLoc = localStorage.getItem('smartTransitLocation') === 'true';
+                const savedDarkMode = localStorage.getItem('smartTransitDarkMode') === 'true';
+                
+                const langSelect = document.getElementById('lang-select');
+                if (langSelect) langSelect.value = savedLang;
+                
+                const locToggle = document.getElementById('location-toggle');
+                if (locToggle) locToggle.checked = savedLoc;
+                
+                const darkToggle = document.getElementById('darkmode-toggle');
+                if (darkToggle) darkToggle.checked = savedDarkMode;
+
+                const settingsModal = document.getElementById('settings-modal');
+                if (settingsModal) settingsModal.classList.add('active');
+            } catch (e) {
+                console.error("打開設定面板發生錯誤: ", e);
+            }
+        }
+
+        // 4. 關閉設定介面
+        function closeSettings() {
+            const settingsModal = document.getElementById('settings-modal');
+            if (settingsModal) settingsModal.classList.remove('active');
+        }
+
+        // 5. 儲存語言設定
+        // 5. 儲存語言設定 (升級版：切換語言時即時更新所有動態資料)
+        function saveLanguage() {
+            const lang = document.getElementById('lang-select').value;
+            localStorage.setItem('smartTransitLang', lang);
+            applyLanguage(lang); // 切換當下立刻翻譯靜態文字
+            
+            // 💡 1. 重新渲染側邊歷史紀錄與最愛
+            if (typeof loadSuggestions === 'function') loadSuggestions();
+
+            // 💡 2. 重新渲染車站選單 (如果它剛好打開的話)
+            if (typeof renderLineTabs === 'function') renderLineTabs();
+            if (document.getElementById('station-search') && document.getElementById('station-search').value.trim() !== '') {
+                if (typeof filterStations === 'function') filterStations();
+            } else {
+                const activeLine = document.querySelector('.line-item.active')?.dataset.line || 'all';
+                if (typeof selectLine === 'function') selectLine(activeLine);
+            }
+            
+            // 💡 3. 重新翻譯首頁上已經選擇的起終點車站
+            const originDisplay = document.getElementById("origin-display");
+            const originInput = document.getElementById("origin");
+            if (originDisplay && originDisplay.dataset.rawName && originInput) {
+                originDisplay.textContent = formatStationName(originInput.value, originDisplay.dataset.rawName);
+            }
+            
+            const destDisplay = document.getElementById("destination-display");
+            const destInput = document.getElementById("destination");
+            if (destDisplay && destDisplay.dataset.rawName && destInput) {
+                destDisplay.textContent = formatStationName(destInput.value, destDisplay.dataset.rawName);
+            }
+
+            // 💡 4. 重新抓取並翻譯即時動態看板
+            const currentLiveStationDisplay = document.getElementById("live-board-station");
+            if (currentLiveStationDisplay && currentLiveStationDisplay.dataset.rawName) {
+                if (typeof loadLiveBoard === 'function') loadLiveBoard(currentLiveStationDisplay.dataset.rawName);
+            }
+            const resultsContainer = document.getElementById("route-results-container");
+            if (resultsContainer && resultsContainer.classList.contains('active')) {
+                if (typeof applySorting === 'function') {
+                    applySorting(); 
+                }
+            }
+        }
+
+        // 6. 處理位置權限開關 (同步升級版)
+        function handleLocationToggle() {
+            const isChecked = document.getElementById('location-toggle').checked;
+            if (isChecked) {
+                // 💡 一打開就先存 true，讓 UI 保持完美同步
+                localStorage.setItem('smartTransitLocation', 'true');
+                
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            alert(`✅ 成功取得位置權限！\n(您的經緯度: ${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)})\n現在可以使用「📍 附近車站」功能了。`);
+                            // 💡 權限拿到後，順便幫使用者把首頁的看板更新成他的所在地！
+                            initLiveBoardWithLocation();
+                        },
+                        (error) => {
+                            if (error.code === error.PERMISSION_DENIED) {
+                                alert("❌ 無法取得位置，請確認您的瀏覽器權限設定。");
+                                document.getElementById('location-toggle').checked = false;
+                                localStorage.setItem('smartTransitLocation', 'false');
+                            } else {
+                                alert("⚠️ 定位連線超時，但權限已開啟！稍後將自動重試。");
+                            }
+                        },
+                        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+                    );
+                } else {
+                    alert("您的瀏覽器不支援地理位置功能。");
+                    document.getElementById('location-toggle').checked = false;
+                    localStorage.setItem('smartTransitLocation', 'false');
+                }
+            } else {
+                localStorage.setItem('smartTransitLocation', 'false');
+                // 💡 關閉定位時，立刻觸發看板重置，退回預設的民雄車站
+                initLiveBoardWithLocation();
+            }
+        }
+
+        // 7. 重新播放功能簡介
+        function replayIntro() {
+            closeSettings();
+            const intro = document.getElementById('intro-overlay');
+            if (intro) {
+                intro.classList.remove('intro-fade-out');
+                intro.style.display = 'flex';
+                intro.style.zIndex = '10000';
+                intro.style.opacity = '1'; 
+                sessionStorage.removeItem('introSeen');
+            }
+        }
+        function handleGuestLogin() {
+            sessionStorage.setItem('isGuest', 'true');
+            const loginModal = document.getElementById('auth-login-modal');
+            if (loginModal) {
+                showWelcomeScreen({ name: '訪客', isGuest: true });
+                loginModal.classList.add('exit');
+                setTimeout(() => {
+                    loginModal.style.display = 'none';
+                }, 900);
+            } else {
+                showWelcomeScreen({ name: '訪客', isGuest: true });
+            }
+        }
+        // 新增此函式來控制這兩個區塊的顯隱
+        // 1. 統一管理顯示/隱藏的函式
+        function toggleRandomFeatures(show) {
+            const diceBtn = document.getElementById('random-dice-btn');
+            const slotMachine = document.getElementById('random-slot-machine');
+            
+            // 如果找到了元素，才執行顯示/隱藏
+            if (diceBtn) diceBtn.style.display = show ? 'flex' : 'none';
+            if (slotMachine) slotMachine.style.display = show ? 'block' : 'none';
+        }
+
+        // 2. 這是「再找一筆」按鈕會觸發的函式
+        function resetSearchForm() { 
+            backToSearch(); 
+        }
+
+        // 3. 這是真正執行頁面切換的地方
+        function backToSearch() {
+            // 隱藏地圖區塊
+            document.getElementById('taiwan-map-wrapper').style.display = 'none';
+            
+            // 顯示搜尋表單
+            document.getElementById('search-form-container').style.display = 'block';
+            
+            // 清理結果容器
+            const resultsContainer = document.getElementById("route-results-container");
+            if (resultsContainer) { 
+                resultsContainer.classList.remove('active'); 
+                resultsContainer.innerHTML = ''; 
+            }
+            
+            // 恢復下方的列表
+            document.getElementById('top-boards-container')?.style.setProperty('display', 'grid');
+            
+            // 💡 關鍵在這裡：這行一定要加，讓骰子和拉霸機回來
+            toggleRandomFeatures(true); 
+
+            // 🌟 新增這行：每次回到首頁時，強制重新載入並渲染最新的歷史紀錄！
+            loadSuggestions();
+            // 💡 新增：將拉霸機的文字與標題，重置回當前語言的預設狀態
+            const slotTitle = document.getElementById("slot-title");
+            const slotText = document.getElementById("slot-text");
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            
+            if (slotTitle) {
+                slotTitle.textContent = dict['slot-title'];
+                slotTitle.style.color = "#5A5550";
+            }
+            if (slotText) {
+                slotText.textContent = dict['slot-text'];
+                slotText.style.color = "#7EB5B3";
+                slotText.style.transform = "scale(1)";
+            }
+        }
+        // 💡 新增：清除所有歷史紀錄功能
+        async function clearAllHistory() {
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            // 💡 雙語化 confirm 視窗
+            const confirmMsg = lang === 'en' 
+                ? "Are you sure you want to clear all history?\n(Don't worry, 'Favorited' routes will be kept!)" 
+                : "確定要清除所有歷史紀錄嗎？\n(放心，已標記為『最愛』的路線將會保留喔！)";
+                
+            if (!confirm(confirmMsg)) return;
+
+            const isGuest = sessionStorage.getItem('isGuest') === 'true';
+
+            if (isGuest) {
+                localStorage.removeItem('smartTransitHistory');
+                // 💡 雙語化 alert
+                alert(lang === 'en' ? "Local history cleared!" : "本機歷史紀錄已清除！");
+                loadSuggestions(); 
+            } else {
+                try {
+                    const res = await fetch(`${API_BASE}/api/history/clear`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+                    
+                    if (data.status === 'success') {
+                        // 💡 雙語化 alert
+                        alert(lang === 'en' ? "Cloud history cleared!" : "雲端歷史紀錄已清除！");
+                        loadSuggestions(); 
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) {
+                    console.error("清除歷史失敗:", e);
+                    alert(lang === 'en' ? "Connection error, please try again later." : "連線異常，請稍後再試。");
+                }
+            }
+        }
+
+        // ==========================================
+        // 📍 前端 GPS 定位與距離精算核心引擎 (乾淨單一版本)
+        // ==========================================
+        function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371; // 地球半徑 (KM)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // 2. 一鍵定位最近車站並自動填入起點 (內含開關檢查)
+        function findNearestStation(event) {
+            if (event) event.stopPropagation(); 
+
+            // 💡 關鍵攔截點：優先檢查設定中的定位開關是否開啟
+            const isLocationEnabled = localStorage.getItem('smartTransitLocation') === 'true';
+            if (!isLocationEnabled) {
+                alert("📍 系統定位功能目前已關閉！\n請先點擊右上角「⚙️ 系統設定」，開啟「允許存取位置資訊」功能。");
+                return; // 關閉狀態下直接中斷，不執行任何定位邏輯
+            }
+
+            if (!navigator.geolocation) {
+                alert("您的瀏覽器不支援地理定位功能！");
+                return;
+            }
+
+            const originInput = document.getElementById("origin");
+            const originDisplay = document.getElementById("origin-display");
+            const originalText = originDisplay.textContent; 
+            
+            if (!ALL_STATIONS || ALL_STATIONS.length === 0) {
+                alert("車站資料庫尚在加載中，請稍等一秒鐘喔！");
+                return;
+            }
+
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            originDisplay.textContent = dict['origin-locating'] || " 衛星定位中...";
+            originDisplay.style.color = "#7EB5B3";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+                    
+                    let nearestStation = null;
+                    let minDistance = Infinity;
+
+                    ALL_STATIONS.forEach(station => {
+                        const stationId = station.id; // 💡 確保使用帶有中文的 station.id
+                        const coords = DYNAMIC_COORDS[stationId];
+                        
+                        if (coords) {
+                            const dist = getDistanceFromLatLonInKm(userLat, userLon, coords.lat, coords.lng);
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                nearestStation = station;
+                            }
+                        }
+                    });
+
+                    if (nearestStation) {
+                        const finalId = nearestStation.id;
+                        const finalName = nearestStation.name_zh;
+
+                        originInput.value = finalId;
+                        originDisplay.dataset.rawName = finalName;
+                        const formattedName = formatStationName(finalId, finalName);
+                        const distText = minDistance < 1 ? `${Math.round(minDistance * 1000)}m` : `${minDistance.toFixed(1)}km`;
+                        
+                        const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+                        const approxText = lang === 'en' ? 'Approx. ' : '約 ';
+                        originDisplay.textContent = `${formattedName} (${approxText}${distText})`;
+                        originDisplay.style.color = ""; 
+                        originDisplay.classList.add('selected');
+                        
+                        originDisplay.style.transition = "background-color 0.3s";
+                        originDisplay.style.backgroundColor = "rgba(126, 181, 179, 0.25)";
+                        setTimeout(() => originDisplay.style.backgroundColor = "transparent", 400);
+                        loadLiveBoard(finalName);
+                    } else {
+                        originDisplay.textContent = originalText;
+                        originDisplay.style.color = "";
+                        alert("比對失敗！請確認坐標資料庫是否載入成功。");
+                    }
+                },
+                (error) => {
+                    console.warn("地理定位失敗:", error);
+                    originDisplay.textContent = originalText;
+                    originDisplay.style.color = ""; 
+                    
+                    if (error.code === error.PERMISSION_DENIED) {
+                        alert("定位失敗！請確認已開啟瀏覽器的 GPS 權限，並允許此網站存取您的位置。");
+                    } else {
+                        alert("衛星定位連線超時或失敗，請嘗試手動選擇車站. ");
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+            );
+        }
+        function selectStation(id, name) {
+            const display = document.getElementById(`${CURRENT_PICKER_TARGET}-display`);
+            const input = document.getElementById(CURRENT_PICKER_TARGET);
+            
+            if (display && input) { 
+                display.dataset.rawName = name; // 💡 偷存中文原名，給切換語言使用
+                display.textContent = formatStationName(id, name); 
+                display.classList.add('selected'); 
+                input.value = id; 
+            }
+            closeStationPicker();
+        }
+
+        function applySuggestion(startId, endId, alias) {
+            if (document.getElementById("origin")) document.getElementById("origin").value = startId;
+            if (document.getElementById("destination")) document.getElementById("destination").value = endId;
+            const parts = alias.split(' ➔ ');
+            if (parts.length === 2) {
+                const originDisplay = document.getElementById("origin-display");
+                originDisplay.dataset.rawName = parts[0]; // 💡 偷存中文原名
+                originDisplay.textContent = formatStationName(startId, parts[0]); 
+                originDisplay.classList.add('selected');
+                
+                const destDisplay = document.getElementById("destination-display");
+                destDisplay.dataset.rawName = parts[1]; // 💡 偷存中文原名
+                destDisplay.textContent = formatStationName(endId, parts[1]);
+                destDisplay.classList.add('selected');
+            }
+        }
+
+        function swapStations() {
+            const originInput = document.getElementById("origin");
+            const destInput = document.getElementById("destination");
+            const originDisplay = document.getElementById("origin-display");
+            const destDisplay = document.getElementById("destination-display");
+
+            if (!originInput.value && !destInput.value) return;
+
+            // 1. 交換隱藏的 ID
+            const tempId = originInput.value;
+            originInput.value = destInput.value;
+            destInput.value = tempId;
+
+            // 2. 交換偷存的中文原名 (這樣切換語言時才不會翻錯邊)
+            const tempRawName = originDisplay.dataset.rawName;
+            originDisplay.dataset.rawName = destDisplay.dataset.rawName;
+            destDisplay.dataset.rawName = tempRawName;
+
+            // 3. 處理文字顏色與狀態
+            const originHasSelected = originDisplay.classList.contains('selected');
+            const destHasSelected = destDisplay.classList.contains('selected');
+            if (destHasSelected) originDisplay.classList.add('selected'); else originDisplay.classList.remove('selected');
+            if (originHasSelected) destDisplay.classList.add('selected'); else destDisplay.classList.remove('selected');
+
+            // --- 💡 修復區域開始 ---
+            // 獲取當前語言與字典，以備空值時填入正確的 placeholder
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+
+            // 4. 重新設定顯示的站名文字
+            if (originInput.value) {
+                originDisplay.textContent = formatStationName(originInput.value, originDisplay.dataset.rawName);
+            } else {
+                originDisplay.textContent = dict['ph-origin']; // 填回「請選擇起點車站」
+            }
+
+            if (destInput.value) {
+                destDisplay.textContent = formatStationName(destInput.value, destDisplay.dataset.rawName);
+            } else {
+                destDisplay.textContent = dict['ph-dest'];   // 填回「請選擇終點車站」
+            }
+            // --- 💡 修復區域結束 ---
+        }
+        // 💡 工具函式：隨機決定終點車站 (防呆強化版)
+        function rollRandomDestination() {
+            if (!ALL_STATIONS || ALL_STATIONS.length === 0) {
+                alert("車站資料還在努力載入中，請稍等一下喔！");
+                return;
+            }
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            const slotMachine = document.getElementById("random-slot-machine");
+            const slotTitle = document.getElementById("slot-title");
+            const slotText = document.getElementById("slot-text");
+            
+            if (!slotMachine) {
+                alert("糟糕！找不到拉霸機區塊，請確認 HTML 有沒有放對位子喔！");
+                return;
+            }
+            
+            // 1. 打開拉霸機區塊並設定初始狀態
+            slotMachine.style.display = 'block';
+            if (slotTitle) {
+                slotTitle.textContent = dict['slot-rolling-title'] || "尋找靈感中...";
+                slotTitle.style.color = "#8A857F";
+            }
+            
+            let rollCount = 0;
+            const maxRolls = 20;   // 拉霸轉動的次數
+            const rollSpeed = 50;  // 每次跳動的速度 (毫秒)
+            
+            // 如果連點骰子，先清掉上一次的動畫避免打架
+            if (window.slotInterval) clearInterval(window.slotInterval);
+            
+            // 防呆機制：如果外部沒有 formatStationName，就用這個內建的備用轉換器
+            // 將原本的 const safeFormatName = (name) => { ... } 改為：
+            const safeFormatName = (id, name) => {
+                if (typeof formatStationName === "function") return formatStationName(id, name);
+                if (!name) return "";
+                if (name.includes(" (高鐵)")) return name.replace(" (高鐵)", "高鐵站");
+                if (name.includes(" (台鐵)")) return name.replace(" (台鐵)", "火車站");
+                if (!name.includes("站")) return name + "火車站";
+                return name;
+            };
+            
+            // 2. 開始急速閃爍切換車站名字
+            window.slotInterval = setInterval(() => {
+                const tempIndex = Math.floor(Math.random() * ALL_STATIONS.length);
+                if (slotText) {
+                    // 在 window.slotInterval 內部，將原本的呼叫改為：
+                    slotText.textContent = safeFormatName(ALL_STATIONS[tempIndex].id, ALL_STATIONS[tempIndex].name_zh);
+                    slotText.style.color = "#A9A5A0"; // 轉動時字體變淺色
+                    slotText.style.transform = "scale(0.95)";
+                }
+                
+                rollCount++;
+                
+                // 3. 轉動次數到了，停下來開獎！
+                if (rollCount >= maxRolls) {
+                    clearInterval(window.slotInterval);
+                    
+                    const finalIndex = Math.floor(Math.random() * ALL_STATIONS.length);
+                    const finalStation = ALL_STATIONS[finalIndex];
+                    // 在 if (rollCount >= maxRolls) 區塊內，將原本的呼叫改為：
+                    const finalName = safeFormatName(finalStation.id, finalStation.name_zh);
+                    
+                    // 變更標題為「今天就去這!」並上色
+                    if (slotTitle) {
+                        slotTitle.textContent = dict['slot-result-title'] || "今天就去這!";
+                        slotTitle.style.color = "#C9896F";
+                    }
+                    
+                    // 顯示最終車站並加上小彈跳特效
+                    if (slotText) {
+                        slotText.textContent = finalName;
+                        slotText.style.color = "#5A5550";
+                        slotText.style.transform = "scale(1.15)"; // 放大彈出
+                        setTimeout(() => slotText.style.transform = "scale(1)", 200); // 縮回正常大小
+                    }
+                    
+                    // 4. 同步更新上方的終點輸入框
+                    const destInput = document.getElementById("destination");
+                    const destDisplay = document.getElementById("destination-display");
+                    
+                    if (destInput && destDisplay) {
+                        destInput.value = finalStation.id;
+                        destDisplay.dataset.rawName = finalStation.name_zh;
+                        destDisplay.textContent = finalName;
+                        destDisplay.classList.add('selected');
+                        
+                        // 讓輸入框也閃一下，提示使用者資料已經幫他填好了
+                        destDisplay.style.transition = "background-color 0.3s";
+                        destDisplay.style.backgroundColor = "rgba(126, 181, 179, 0.3)";
+                        setTimeout(() => destDisplay.style.backgroundColor = "transparent", 400);
+                    }
+                }
+            }, rollSpeed);
+        }
+        function showWelcomeScreen(user) {
+            const intro = document.getElementById('intro-overlay');
+            if (intro && intro.style.display !== 'none') {
+                intro.classList.add('intro-fade-out');
+                setTimeout(() => { intro.style.display = 'none'; }, 950);
+            }
+
+            const uiLayer = document.querySelector('.foreground-ui-layer');
+            if (uiLayer) uiLayer.style.display = 'block';
+
+            const statusBlock = document.getElementById('user-status-block');
+            if (statusBlock) {
+                if (user.isGuest) {
+                    statusBlock.innerHTML = `
+                        <span style="color: #8A857F; font-size: 13px;" data-i18n="status-guest">👤 訪客模式</span>
+                        <button onclick="window.location.href='/smart-transfer-system/login'" class="login-btn" style="display: flex; align-items: center; gap: 8px;" data-i18n="btn-login">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" style="width: 16px; height: 16px;">登入帳號
+                        </button>
+                    `;
+                } else {
+                    // 💡 針對動態名字的特殊處理：直接用 JS 判斷當前語言
+                    const currentLang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+                    const welcomeText = currentLang === 'en' ? 'Welcome, ' : '歡迎，';
+                    
+                    statusBlock.innerHTML = `
+                        <span style="color: #5A5550;">${welcomeText}<b style="color: #C9896F;">${user.name}</b></span>
+                        <button onclick="logout()" class="logout-btn" data-i18n="btn-logout">登出系統</button>
+                    `;
+                }
+            }
+            
+            // 💡 關鍵：動態內容塞入畫面後，強制呼叫翻譯引擎翻譯一次
+            applyLanguage(localStorage.getItem('smartTransitLang') || 'zh-TW');
+        }
+        document.addEventListener("DOMContentLoaded", async () => {
+            // 1. 檢查是否已經看過介紹頁
+            const hasSeenIntro = sessionStorage.getItem('introSeen'); 
+            
+            if (hasSeenIntro) {
+                const intro = document.getElementById('intro-overlay');
+                if (intro) intro.style.display = 'none';
+                checkAuth().catch(e => console.warn('checkAuth失敗:', e));
+            }
+
+            // 2. 載入基本車站清單
+            try {
+                await Promise.race([
+                    Promise.all([
+                        loadSuggestions().catch(e => console.warn('loadSuggestions失敗:', e)),
+                        fetchStationsData().catch(e => console.warn('fetchStationsData失敗:', e))
+                    ]),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('初始化超時')), 15000))
+                ]);
+            } catch (e) {
+                console.warn("初始化超時，使用預設設定:", e);
+            }
+            
+            initDateTime();
+            
+            // 3. 載入「地圖座標與軌跡」，完成後才啟動「智慧定位看板」
+            setTimeout(async () => {
+                try {
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('坐標加載超時')), 3000));
+                    const coordRes = await Promise.race([fetch(`${API_BASE}/api/coords`), timeoutPromise]);
+                    DYNAMIC_COORDS = await coordRes.json();
+                } catch (e) { DYNAMIC_COORDS = {}; }
+                
+                try {
+                    const shapeRes = await fetch(`${API_BASE}/api/shapes`);
+                    const shapeData = await shapeRes.json();
+                    if (shapeData.THSR) {
+                        REAL_SHAPES.thsr = parseWKT(shapeData.THSR);
+                    }
+                } catch (e) { console.warn("真實軌跡載入失敗", e); }
+
+                // 💡 關鍵修正：確保 DYNAMIC_COORDS 下載完成後，才呼叫定位引擎！
+                initLiveBoardWithLocation();
+                
+            }, 100);
+        });
+        // ==========================================
+        // 📍 智慧定位看板引擎 (主動出擊版)
+        // ==========================================
+        function initLiveBoardWithLocation() {
+            const locSetting = localStorage.getItem('smartTransitLocation');
+            const stationSpan = document.getElementById('live-board-station');
+            const boardContainer = document.getElementById('real-live-board'); 
+            
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            
+            const loadStationBoard = (stationName) => {
+                if (stationSpan) stationSpan.removeAttribute('data-i18n');
+                
+                const displayStationName = lang === 'en' ? (stationEnMap[stationName] || stationName) : stationName;
+                const finalDisplayName = (lang === 'en' && !displayStationName.includes('Station')) 
+                    ? `${displayStationName} Station` 
+                    : displayStationName;
+
+                if (stationSpan) {
+                    stationSpan.textContent = finalDisplayName;
+                    stationSpan.dataset.rawName = stationName;
+                }
+                loadLiveBoard(stationName); 
+            };
+
+            // 1. 放寬檢查：只要瀏覽器支援 GPS，且使用者沒有明確在設定關閉，一進網站就直接嘗試定位！
+            if (!navigator.geolocation || locSetting === 'false') {
+                loadStationBoard('民雄');
+                return;
+            }
+            
+            // 2. 如果全台車站資料庫還沒下載完，等 0.5 秒後自動重試
+            if (!ALL_STATIONS.length || Object.keys(DYNAMIC_COORDS).length === 0) {
+                setTimeout(initLiveBoardWithLocation, 500);
+                return;
+            }
+
+            // 3. 資料庫準備好了，直接主動呼叫 GPS！
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // 💡 定位成功：自動幫使用者把設定裡的開關打開
+                    localStorage.setItem('smartTransitLocation', 'true');
+                    const locToggle = document.getElementById('location-toggle');
+                    if (locToggle) locToggle.checked = true;
+
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+                    
+                    let nearestStation = null;
+                    let minDistance = Infinity;
+
+                    ALL_STATIONS.forEach(station => {
+                        if (!station.id.startsWith('TRA_')) return; 
+                        
+                        const coords = DYNAMIC_COORDS[station.id];
+                        if (coords) {
+                            const dist = getDistanceFromLatLonInKm(userLat, userLon, coords.lat, coords.lng);
+                            if (dist < minDistance) {
+                                minDistance = dist;
+                                nearestStation = station;
+                            }
+                        }
+                    });
+
+                    // 開獎並更新看板
+                    if (nearestStation) {
+                        const cleanName = nearestStation.name_zh.replace(/站$/, "");
+                        loadStationBoard(cleanName);
+                    } else {
+                        loadStationBoard('民雄');
+                    }
+                },
+                (error) => {
+                    console.warn("看板定位發生錯誤", error);
+                    
+                    // 💡 核心修復：只有當使用者明確點擊「封鎖 (拒絕)」時，才把開關徹底關閉
+                    if (error.code === error.PERMISSION_DENIED) {
+                        localStorage.setItem('smartTransitLocation', 'false');
+                        const locToggle = document.getElementById('location-toggle');
+                        if (locToggle) locToggle.checked = false;
+                    } else {
+                        // 💡 如果是超時 (Timeout) 或暫時抓不到，代表使用者「有按同意」，所以我們要幫他把開關同步打開！
+                        localStorage.setItem('smartTransitLocation', 'true');
+                        const locToggle = document.getElementById('location-toggle');
+                        if (locToggle) locToggle.checked = true;
+                    }
+
+                    loadStationBoard('民雄'); // 暫時退回民雄
+                },
+                // 💡 把精準度要求降低，時間拉長，減少電腦端超時機率
+                { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+            );
+        }
+        function initDateTime() {
+            const today = new Date();
+            const dateInput = document.getElementById('departure-date');
+            const timeInput = document.getElementById('departure-time');
+            
+            // 1. 處理本地日期 (避開 toISOString 的 UTC 時差問題)
+            if (dateInput) {
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const localDate = `${yyyy}-${mm}-${dd}`;
+                
+                dateInput.value = localDate;
+                dateInput.min = localDate;
+            }
+            
+            // 2. 處理時間進位 (讓 Date 物件自動處理 59 分 + 5 分 = 下一小時的狀況)
+            if (timeInput) {
+                // 先把 today 的時間往後推 5 分鐘
+                today.setMinutes(today.getMinutes() + 5);
+                
+                // 再把它們轉成文字並補零
+                const h = String(today.getHours()).padStart(2, '0');
+                const m = String(today.getMinutes()).padStart(2, '0');
+                
+                timeInput.value = `${h}:${m}`;
+            }
+        }
+        async function fetchStationsData() {
+            try {
+                const response = await fetch(`${API_BASE}/api/stations?t=${new Date().getTime()}`);
+                const data = await response.json();
+                STATION_LINES = data.lines || {};
+                ALL_STATIONS = data.stations || [];
+                renderLineTabs();
+                renderAllStations();
+            } catch (error) {
+                console.warn("車站資料載入失敗", error);
+            }
+        }
+
+        
+
+        function saveSearchToHistory(startId, endId, startName, destName) {
+            if (sessionStorage.getItem('isGuest') === 'true') {
+                let localHist = JSON.parse(localStorage.getItem('smartTransitHistory') || '[]');
+                localHist = localHist.filter(h => !(h.start === startId && h.end === endId));
+                localHist.unshift({ type: 'history', start: startId, end: endId, alias: `${startName} ➔ ${destName}` });
+                localStorage.setItem('smartTransitHistory', JSON.stringify(localHist.slice(0, 20)));
+                loadSuggestions(); 
+            }
+        }
+
+        function openStationPicker(target) {
+            CURRENT_PICKER_TARGET = target;
+            document.getElementById('station-picker-modal')?.classList.add('active');
+            if (document.getElementById('station-search')) document.getElementById('station-search').value = '';
+            selectLine('all');
+        }
+
+        function closeStationPicker() {
+            document.getElementById('station-picker-modal')?.classList.remove('active');
+        }
+
+        function generateStationChip(station, hideSuffix = false) {
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            // 取出基礎站名並翻譯
+            let baseName = station.name_zh;
+            let displayName = (lang === 'en') ? (stationEnMap[baseName] || baseName) : baseName;
+
+            const ambiguousStations = ['南港', '台北', '板橋', '桃園', '新竹', '苗栗', '台中', '彰化', '雲林', '嘉義', '台南', '左營'];
+            
+            if (!hideSuffix && ambiguousStations.includes(station.name_zh)) {
+                if (lang === 'en') {
+                    displayName += station.id.includes('THSR') ? ' (THSR)' : ' (TRA)';
+                } else {
+                    displayName += station.id.includes('THSR') ? ' (高鐵)' : ' (台鐵)';
+                }
+            }
+            
+            // 注意：onclick 傳遞的還是原始中文 name，因為我們需要它來做後續的邏輯與翻譯
+            return `<span class="station-chip" data-id="${station.id}" data-name="${station.name_zh}" onclick="selectStation('${station.id}', '${station.name_zh}')">${displayName}</span>`;
+        }
+
+        function renderLineTabs() {
+            const container = document.getElementById('picker-lines-container');
+            if (!container) return;
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const allText = lang === 'en' ? 'All' : '全部';
+            
+            let html = `<div class="line-item active" data-line="all" onclick="selectLine('all')">
+                            <span class="line-icon"><img src="/static/images/trainicon.png" class="line-img" alt=""></span>
+                            <span class="line-name">${allText}</span>
+                        </div>`;
+            
+            for (const lineName in STATION_LINES) {
+                const iconPath = lineName === '高鐵' ? 'highspeedicon.png' : 'trainicon.png';
+                const displayText = lang === 'en' ? (lineEnMap[lineName] || lineName) : lineName;
+                html += `<div class="line-item" data-line="${lineName}" onclick="selectLine('${lineName}')">
+                            <span class="line-icon"><img src="/static/images/${iconPath}" class="line-img" alt=""></span>
+                            <span class="line-name">${displayText}</span>
+                        </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderAllStations() {
+            const container = document.getElementById('picker-stations');
+            if (!container) return;
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            let html = '<div class="station-line-group">';
+            for (const [lineName, stations] of Object.entries(STATION_LINES)) {
+                const displayTitle = lang === 'en' ? (lineEnMap[lineName] || lineName) : lineName;
+                html += `<div class="station-line-title">${displayTitle}</div><div class="station-chips">`;
+                for (const station of stations) html += generateStationChip(station, false);
+                html += '</div>';
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function selectLine(lineName) {
+            document.querySelectorAll('.line-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.line === lineName);
+            });
+
+            const container = document.getElementById('picker-stations');
+            if (!container) return;
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            if (lineName === 'all') { renderAllStations(); return; }
+
+            const stations = STATION_LINES[lineName] || [];
+            const displayTitle = lang === 'en' ? (lineEnMap[lineName] || lineName) : lineName;
+            
+            let html = `<div class="station-line-group"><div class="station-line-title">${displayTitle}</div><div class="station-chips">`;
+            for (const station of stations) html += generateStationChip(station, true);
+            container.innerHTML = html + '</div></div>';
+        }
+
+        function filterStations() {
+            const query = document.getElementById('station-search').value.toLowerCase().trim();
+            if (!query) return selectLine('all');
+            
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+
+            // 💡 支援中英文混雜搜尋
+            const matchedStations = ALL_STATIONS.filter(s => {
+                const zhMatch = s.name_zh.includes(query);
+                const enName = stationEnMap[s.name_zh] || "";
+                const enMatch = enName.toLowerCase().includes(query);
+                return zhMatch || enMatch;
+            });
+            
+            const titleText = lang === 'en' ? `Search Results (${matchedStations.length})` : `搜尋結果 (${matchedStations.length})`;
+            const noResultText = lang === 'en' ? 'No stations found' : '找不到符合的車站';
+
+            let html = `<div class="station-line-group"><div class="station-line-title">${titleText}</div><div class="station-chips">`;
+            matchedStations.slice(0, 50).forEach(station => html += generateStationChip(station, false));
+            if (matchedStations.length === 0) html += `<div class="no-results" style="color:#A9A5A0; margin-left:10px;">${noResultText}</div>`;
+            
+            document.getElementById('picker-stations').innerHTML = html + '</div></div>';
+        }
+
+        
+        // 💡 工具函式：將選單站名轉換為完整的 5 字顯示
+        // 💡 工具函式：利用車站 ID 精準判斷並轉換為完整的顯示名稱
+        function formatStationName(id, name) {
+            if (!name) return "";
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            // 濾掉贅字，還原為純站名
+            let cleanName = name.replace(" (高鐵)", "").replace(" (台鐵)", "").replace("高鐵 ", "").replace("台鐵 ", "").replace("火車站", "").replace("高鐵站", "").replace(/站$/, "").trim();
+
+            if (lang === 'en') {
+                let enName = stationEnMap[cleanName] || cleanName;
+                return (id && id.includes("THSR")) ? enName + " THSR Station" : enName + " Station";
+            } else {
+                return (id && id.includes("THSR")) ? cleanName + "高鐵站" : cleanName + "火車站";
+            }
+        }
+
+        
+        // 💡 切換預算無上限的 UI 狀態
+        function toggleBudgetInput() {
+            const isChecked = document.getElementById('no-budget-limit').checked;
+            const budgetInput = document.getElementById('budget-limit');
+            
+            if (isChecked) {
+                budgetInput.dataset.oldValue = budgetInput.value; // 記住原本填的數字
+                budgetInput.value = '';
+                budgetInput.disabled = true;
+                budgetInput.placeholder = "已設定為無預算上限";
+                budgetInput.style.backgroundColor = "rgba(126, 181, 179, 0.05)"; // 變成淡淡的綠色
+            } else {
+                budgetInput.value = budgetInput.dataset.oldValue || '3000';
+                budgetInput.disabled = false;
+                budgetInput.placeholder = "例如: 2500";
+                budgetInput.style.backgroundColor = ""; // 恢復原狀
+            }
+        }
+        async function handleSearchSubmit() {
+            // 💡 1. 在函式最上方取得當前語系與字典檔
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+
+            const originId = document.getElementById("origin").value;
+            const destinationId = document.getElementById("destination").value;
+            const originName = document.getElementById("origin-display").dataset.rawName || document.getElementById("origin-display").textContent.replace(/\s*\(約.*?\)/g, "").trim();
+            const destName = document.getElementById("destination-display").dataset.rawName || document.getElementById("destination-display").textContent.replace(/\s*\(約.*?\)/g, "").trim();
+            
+            if (!originId || !destinationId) { 
+                // 💡 2. 防呆提示雙語化
+                alert(lang === 'en' ? "Please select both origin and destination!" : "請完整選擇起點和終點車站！"); 
+                return; 
+            }
+
+            let budgetInput = document.getElementById("budget-limit")?.value;
+            const isNoLimit = document.getElementById('no-budget-limit')?.checked;
+            
+            if (isNoLimit) {
+                budgetInput = "999999";
+            } else if (!budgetInput || budgetInput.trim() === "") {
+                // 💡 3. 防呆提示雙語化
+                alert(lang === 'en' ? "Please enter a budget or check 'No Limit'!" : "請輸入預算上限，或勾選「無預算上限」！");
+                return;
+            }
+
+            const timeStr = document.getElementById("departure-time")?.value || "12:00";
+            const latestTimeStr = document.getElementById("latest-time")?.value || "";
+
+            if (latestTimeStr !== "" && latestTimeStr < timeStr) {
+                // 💡 4. 防呆提示雙語化
+                alert(lang === 'en' ? "Latest departure time cannot be earlier than departure time!" : "最晚時間不能早於預計出發時間，請重新選擇！");
+                return; 
+            }
+            
+            const searchBtn = document.querySelector(".search-btn");
+            
+            // 💡 5. 將按鈕「計算中」改為讀取字典
+            searchBtn.textContent = dict['btn-searching'] || "轉乘計算中..."; 
+            searchBtn.disabled = true;
+            
+            try {
+                const searchParams = new URLSearchParams({
+                    start: originId, 
+                    end: destinationId,
+                    time: timeStr,
+                    latest_time: latestTimeStr,
+                    budget: budgetInput,
+                    pref: document.getElementById("transfer-pref")?.value || "ALL",
+                    role: document.getElementById("role-select")?.value || "6"
+                });
+
+                console.log("📍 準備發送 API 參數:", searchParams.toString());
+
+                const response = await fetch(`${API_BASE}/api/search?${searchParams.toString()}`);
+                
+                // 💡 6. API 錯誤訊息雙語化
+                if (!response.ok) throw new Error(lang === 'en' ? `API Server Error (${response.status})` : `API 伺服器錯誤 (${response.status})`);
+                
+                const data = await response.json(); 
+                
+                if (data.status !== "success") {
+                    // 💡 7. 後端錯誤訊息雙語化
+                    throw new Error(data.message || (lang === 'en' ? "Unknown backend error" : "後端發生未知錯誤"));
+                }
+
+                const formattedRoutes = data.data.map(route => {
+                    const total_time = route.total_time;
+                    const total_price = route.total_price;
+                    const raw_steps = route.raw_steps; 
+                    
+                    const compressed_steps = compressPath(raw_steps);
+                    
+                    const segments = compressed_steps.map(step => {
+                        let tType = step.train_name || step.sys;
+                        if (step.is_transfer) tType = step.trans_mode === 'WALK' ? '站內轉乘' : (step.trans_mode === 'BUS' ? '公車轉乘' : '計程車轉乘');
+                        
+                        const getStName = id => ALL_STATIONS.find(s => s.code === id)?.name_zh || (id.split('_')[1] || id);
+                        const geoPath = getFilledGeoPath((step.all_stops || [step.from_st, step.to_st]), tType);
+
+                        return {
+                            train_type: tType, train_number: step.train_no || '',
+                            from_station: getStName(step.from_st), to_station: getStName(step.to_st),
+                            from_st_id: step.from_st, 
+                            to_st_id: step.to_st,
+                            departure_time: minToTime(step.dep_time), arrival_time: minToTime(step.arr_time),
+                            price: step.cost, geo_path: geoPath,
+                            delay_mins: step.delay_mins || 0
+                        };
+                    });
+
+                    const train_rides = segments.filter(s => !s.train_type.includes('轉乘')).length;
+                    const transfer_count = train_rides > 0 ? train_rides - 1 : 0;
+                    
+                    // 💡 8. 關鍵修復：這裡一定要補回 absolute_arrival_time，最早抵達排序才不會壞掉！
+                    return { total_time, total_price, transfer_count, segments, absolute_arrival_time: route.absolute_arrival_time };
+                });
+
+                currentSearchRoutes = formattedRoutes; 
+                currentOriginName = originName; 
+                currentDestName = destName;
+                saveSearchToHistory(originId, destinationId, originName, destName);
+                
+                if (formattedRoutes.length > 0) applySorting(); 
+                else renderSearchResults(formattedRoutes, originName, destName); 
+                
+                document.getElementById('search-form-container').style.display = 'none';
+                toggleRandomFeatures(false);
+                
+            } catch (error) {
+                console.error("搜尋發生錯誤:", error);
+                // 💡 9. catch 區塊的彈出錯誤視窗雙語化
+                alert((lang === 'en' ? "Calculation Failed:\n" : "轉乘計算失敗：\n") + error.message + (lang === 'en' ? "\n\n(Press F12 to check Console)" : "\n\n(請按 F12 開啟 Console 查看詳細參數)"));
+            } finally {
+                // 💡 10. 將按鈕「開始搜尋」改為讀取字典
+                searchBtn.textContent = dict['btn-search'] || "開始轉乘計算"; 
+                searchBtn.disabled = false;
+            }
+        }
+        function translateTrainType(type, lang) {
+            if (lang !== 'en') return type;
+            if (type.includes('高鐵')) return 'THSR';
+            if (type.includes('公車轉乘')) return 'Bus';
+            if (type.includes('計程車轉乘')) return 'Taxi';
+            if (type.includes('站內轉乘')) return 'Walk';
+            if (type.includes('區間')) return 'Local Train';
+            if (type.includes('自強')) return 'Tze-Chiang';
+            if (type.includes('普悠瑪')) return 'Puyuma';
+            if (type.includes('太魯閣')) return 'Taroko';
+            if (type.includes('莒光')) return 'Chu-Kuang';
+            return type;
+        }
+        function renderSearchResults(routes, origin, destination) {
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+
+            document.getElementById('top-boards-container')?.style.setProperty('display', 'none');
+            
+            let container = document.getElementById("route-results-container") || document.createElement("div");
+            container.id = "route-results-container";
+            container.className = "route-results-container active";
+            document.querySelector('.control-panel-section').appendChild(container);
+
+            if (!routes || routes.length === 0) {
+                container.innerHTML = `
+                    <div class="route-card" style="text-align: center; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                        <div style="font-size: 48px; opacity: 0.6;">🚫</div>
+                        <div>
+                            <div style="color: #5A5550; font-size: 18px; font-weight: bold; margin-bottom: 8px;">${dict['res-empty-title']}</div>
+                            <div style="color: #8A857F; font-size: 14px; margin-bottom: 20px;">${dict['res-empty-desc']}</div>
+                        </div>
+                        <button onclick="backToSearch()" style="background: transparent; border: 2px solid #7EB5B3; color: #7EB5B3; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 15px; font-weight: bold; transition: all 0.3s;" onmouseover="this.style.background='rgba(126, 181, 179, 0.1)';" onmouseout="this.style.background='transparent';">${dict['res-back-btn']}</button>
+                    </div>`;
+                return;
+            }
+
+            const currentOriginId = document.getElementById("origin").value;
+            const currentDestId = document.getElementById("destination").value;
+            const isFav = allSuggestionsData.some(item => item.type === 'favorite' && item.start === currentOriginId && item.end === currentDestId);
+
+            // 💡 修正點：必須先把這些金牌標籤定義好，下面的 HTML 才能拿來用！
+            const tagEarly = lang === 'en' ? { t: 'Early', d: 'Earliest Arrival' } : { t: '早', d: '抵達時間最早' };
+            const tagCheap = lang === 'en' ? { t: 'Cheap', d: 'Lowest Cost' } : { t: '省', d: '花費最便宜' };
+            const tagDirect = lang === 'en' ? { t: 'Direct', d: 'Least Transfers' } : { t: '直', d: '轉乘次數最少' };
+            const tagFast = lang === 'en' ? { t: 'Fast', d: 'Shortest Duration' } : { t: '快', d: '總耗時最短' };
+
+            // 準備圖例的翻譯文字
+            const legendEarly = lang === 'en' ? 'Earliest' : '最早抵達';
+            const legendCheap = lang === 'en' ? 'Cheapest' : '最便宜';
+            const legendDirect = lang === 'en' ? 'Direct' : '最少轉乘';
+            const legendFast = lang === 'en' ? 'Fastest' : '耗時最短';
+
+            let html = `
+            <div class="results-header-container" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <h3 style="color:#5A5550; margin: 0; font-weight: 900;">${dict['res-title']}</h3>
+                    <div class="legend-container" style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #8A857F;">
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="background: #B9E2E2; color: #5A5550; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold;">${tagEarly.t}</span> ${legendEarly}</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="background: #FFD1A9; color: #5A5550; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold;">${tagCheap.t}</span> ${legendCheap}</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="background: #E0E0E0; color: #5A5550; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold;">${tagDirect.t}</span> ${legendDirect}</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="background: #FFF3D0; color: #5A5550; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold;">${tagFast.t}</span> ${legendFast}</span>
+                    </div>
+                </div>
+                <div class="sort-control">
+                    <select id="route-sort" onchange="applySorting()">
+                        <option value="time"> ${dict['res-sort-time']}</option>
+                        <option value="price"> ${dict['res-sort-price']}</option>
+                        <option value="transfers"> ${dict['res-sort-transfers']}</option>
+                        <option value="duration"> ${dict['res-sort-duration']}</option>
+                    </select>
+                </div>
+            </div>`;
+
+            const currentSort = document.getElementById('route-sort')?.value || 'time';
+            const isTimeSort = currentSort === 'time';
+
+            const tagCount = Math.floor(routes.length / 5) + 1;
+            const routeTags = new Array(routes.length).fill().map(() => []);
+                
+            const timeToMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+            const getDuration = (r) => {
+                const depTime = timeToMin(r.segments[0].departure_time);
+                const arrTime = timeToMin(r.segments[r.segments.length - 1].arrival_time);
+                let duration = arrTime - depTime;
+                if (duration < 0) duration += 1440;
+                return duration;
+            };
+
+            const routeRefs = routes.map((r, i) => ({ r, originalIndex: i, duration: getDuration(r) }));
+
+            [...routeRefs].sort((a, b) => a.r.absolute_arrival_time - b.r.absolute_arrival_time).slice(0, tagCount).forEach(item => {
+                routeTags[item.originalIndex].push({ text: tagEarly.t, bg: '#B9E2E2', title: tagEarly.d });
+            });
+            [...routeRefs].sort((a, b) => (a.r.total_price - b.r.total_price) || (a.duration - b.duration)).slice(0, tagCount).forEach(item => {
+                routeTags[item.originalIndex].push({ text: tagCheap.t, bg: '#FFD1A9', title: tagCheap.d });
+            });
+            [...routeRefs].sort((a, b) => (a.r.transfer_count - b.r.transfer_count) || (a.duration - b.duration)).slice(0, tagCount).forEach(item => {
+                routeTags[item.originalIndex].push({ text: tagDirect.t, bg: '#E0E0E0', title: tagDirect.d });
+            });
+            [...routeRefs].sort((a, b) => a.duration - b.duration).slice(0, tagCount).forEach(item => {
+                routeTags[item.originalIndex].push({ text: tagFast.t, bg: '#FFF3D0', title: tagFast.d });
+            });
+            
+            routes.forEach((route, index) => {
+                const segments = route.segments;
+                if (!segments || segments.length === 0) return;
+                
+                const finalArrTime = segments[segments.length - 1].arrival_time;
+                const startDepTime = segments[0].departure_time; 
+
+                const parseTime = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+                let durationMins = parseTime(finalArrTime) - parseTime(startDepTime);
+                if (durationMins < 0) durationMins += 1440; 
+                
+                const h = Math.floor(durationMins / 60);
+                const m = durationMins % 60;
+                
+                // 耗時文字翻譯
+                const durationText = lang === 'en' 
+                    ? (h > 0 ? `${h}h ${m}m` : `${m}m`) 
+                    : (h > 0 ? `${h}小時${m}分` : `${m}分`);
+
+                let tagsHtml = '';
+                if (routeTags[index] && routeTags[index].length > 0) {
+                    tagsHtml = `<span style="display: inline-flex; gap: 6px; margin-left: 12px; vertical-align: middle;">` + 
+                        routeTags[index].map(t => `<span title="${t.title}" style="display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 6px; height: 22px; border-radius: 11px; background: ${t.bg}; color: #5A5550; font-family: 'Kiwi Maru', serif; font-size: 11px; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: default; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);" onmouseover="this.style.transform='scale(1.15)';" onmouseout="this.style.transform='scale(1)';">${t.text}</span>`).join('') +
+                        `</span>`;
+                }
+
+                // 轉乘次數翻譯
+                const transferCountText = route.transfer_count > 0 
+                    ? (lang === 'en' ? `${route.transfer_count} Transfers` : `${route.transfer_count} 次轉乘`) 
+                    : (lang === 'en' ? "Direct" : "直達車");
+
+                const arrTimeMins = parseTime(finalArrTime);
+                const isLateNight = arrTimeMins >= 1380 || arrTimeMins <= 300;
+                let lateNightWarningHtml = '';
+                if (isLateNight) {
+                    const warningText = lang === 'en' 
+                        ? '[Late Night Warning] Limited transit after arrival' 
+                        : '[深夜抵達警告] 抵達時可能已無接駁大眾運輸，請確認後續行程';
+                    lateNightWarningHtml = `
+                        <div class="late-night-box" style="color: #C9896F; background: rgba(201, 137, 111, 0.05); border: 1px solid rgba(201, 137, 111, 0.15); padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin: 0 0 12px 0; display: flex; align-items: center; gap: 6px;">
+                            <img src="/static/images/clockicon.png" style="width: 14px; height: 14px; vertical-align: middle;">
+                            <span>${warningText}</span>
+                        </div>
+                    `;
+                }
+                
+                // 最愛按鈕與卡片摘要翻譯
+                const planText = lang === 'en' ? 'Option' : '方案';
+                const durationLbl = lang === 'en' ? 'Dur.' : '耗時';
+                const arriveLbl = lang === 'en' ? 'Arr.' : '預計';
+                const arriveSuf = lang === 'en' ? '' : ' 抵達';
+                
+                const favText = isFav 
+                    ? (lang === 'en' ? 'Favorited' : '已在最愛')
+                    : (lang === 'en' ? '☆ Favorite' : '☆ 設為最愛');
+
+                html += `
+                <div class="route-card" onclick="selectRouteOption(${index})" style="cursor: pointer;">
+                    <div class="route-summary">
+                        <div class="summary-left">
+                            <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                                <div class="summary-price" style="margin: 0; line-height: 1;">$${route.total_price}</div>
+                                ${tagsHtml}
+                            </div>
+                            <div class="summary-time"><img src="/static/images/staricon.png" style="width: 16px; height: 16px; vertical-align: text-bottom; margin-right: 4px;"> ${planText} ${index + 1} | ${durationLbl} ${durationText} | ${arriveLbl} ${finalArrTime}${arriveSuf}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                            <div class="transfer-badge">${transferCountText}</div>
+                            <button class="fav-toggle-btn" data-isfav="${isFav}" onclick="event.stopPropagation(); toggleFavoriteRoute('${currentOriginId}', '${currentDestId}', '${origin}', '${destination}')" 
+                                    style="background: ${isFav ? 'rgba(255, 157, 0, 0.1)' : 'transparent'}; border: 1px solid ${isFav ? '#ff9d00' : '#EAEAEA'}; color: ${isFav ? '#ff9d00' : '#8A857F'}; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: all 0.2s;"
+                                    onmouseover="this.style.background='rgba(255, 157, 0, 0.1)'; this.style.borderColor='#ff9d00'; this.style.color='#ff9d00';"
+                                    onmouseout="this.style.background=this.dataset.isfav === 'true' ? 'rgba(255, 157, 0, 0.1)' : 'transparent'; this.style.borderColor=this.dataset.isfav === 'true' ? '#ff9d00' : '#EAEAEA'; this.style.color=this.dataset.isfav === 'true' ? '#ff9d00' : '#8A857F';">
+                                    ${isFav ? `<img src="/static/images/staricon.png" style="width: 14px; height: 14px; vertical-align: text-bottom; margin-right: 4px;"> ${favText}` : favText}
+                            </button>
+                        </div>
+                    </div>
+                    ${lateNightWarningHtml}
+                    <div class="route-timeline">`;
+
+                segments.forEach((seg, idx) => {
+                    const isTransfer = seg.train_type.includes("轉乘");
+                    let iconType = 'trainicon.png';
+                    let iconWidth = 14;
+                    let iconHeight = 14;
+
+                    // 翻譯車種/接駁工具
+                    const translatedType = translateTrainType(seg.train_type, lang);
+                    let trainInfoText = lang === 'en' 
+                        ? `Ride ${translatedType} [${seg.train_number}]` 
+                        : `搭乘 ${seg.train_type} [${seg.train_number}]`;
+
+                    if (seg.train_type.includes("高鐵")) {
+                        iconType = 'highspeedicon.png'; iconWidth = 19; iconHeight = 12; 
+                    }
+                    
+                    if (isTransfer) {
+                        if (seg.train_type === '計程車轉乘') {
+                            iconType = 'taxiicon.png'; 
+                            trainInfoText = lang === 'en' ? 'Taxi Transfer' : '計程車接駁'; 
+                            iconWidth = 16; iconHeight = 16; 
+                        } else if (seg.train_type === '公車轉乘') {
+                            iconType = 'busicon.png'; 
+                            trainInfoText = lang === 'en' ? 'Bus Transfer' : '公車接駁'; 
+                            iconWidth = 16; iconHeight = 16; 
+                        } else {
+                            iconType = 'walkicon.png'; 
+                            trainInfoText = lang === 'en' ? 'Walk / Transfer' : '站內步行/接駁'; 
+                            iconWidth = 15; iconHeight = 15; 
+                        }
+                    }
+                    
+                    let delayBadge = '';
+                    if (seg.delay_mins > 0) {
+                        const delayText = lang === 'en' ? `Delay ${seg.delay_mins}m` : `晚 ${seg.delay_mins} 分`;
+                        delayBadge = `<span style="background: rgba(201, 137, 111, 0.1); color: #C9896F; font-size: 12px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">${delayText}</span>`;
+                    }
+
+                    const isFirst = idx === 0;
+                    const isLast = idx === segments.length - 1;
+                    const isMiddle = !isFirst && !isLast;
+
+                    if (idx === 1 && segments.length > 2) {
+                        const expandText = lang === 'en' 
+                            ? `▼ Click to expand ${segments.length - 2} transfers` 
+                            : `▼ 點擊展開 ${segments.length - 2} 段轉乘明細`;
+                        html += `
+                            <style>.ghost-step::before { display: none !important; }</style>
+                            <div class="timeline-step expand-indicator ghost-step" style="padding: 15px 0;">
+                                <div style="text-align: left; padding-left: 28px; color: #A9A5A0; font-size: 11.5px; letter-spacing: 1px; transform: translateY(-11px);">
+                                    ${expandText}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    const stepClass = isMiddle ? "timeline-step middle-step" : "timeline-step";
+                    const stepStyle = isMiddle ? "display: none;" : "";
+                    
+                    // 翻譯起點到終點與區間花費
+                    const costText = lang === 'en' ? `Cost $${seg.price}` : `區間花費 $${seg.price}`;
+                    
+                    // 將站名翻譯為英文
+                    const fromStationStr = lang === 'en' ? (stationEnMap[seg.from_station] || seg.from_station) : seg.from_station;
+                    const toStationStr = lang === 'en' ? (stationEnMap[seg.to_station] || seg.to_station) : seg.to_station;
+
+                    html += `
+                        <div class="${stepClass}" style="${stepStyle}">
+                            <div class="step-content">
+                                <div class="step-train-title" style="display: flex; align-items: center;">
+                                    <img src="/static/images/${iconType}" style="width: ${iconWidth}px; height: ${iconHeight}px; margin-right: 6px; vertical-align: middle; object-fit: contain;"> 
+                                    <span>${trainInfoText}</span>
+                                    ${delayBadge} 
+                                </div>
+                                <div class="step-details">
+                                    ${fromStationStr} ➔ ${toStationStr} (${seg.departure_time} - ${seg.arrival_time}) | ${costText}
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+        async function checkAuth() {
+            try {
+                // 💡 修正：優先向後端確認真實的登入狀態
+                const res = await fetch('/smart-transfer-system/api/user/status');
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === "logged_in") {
+                        // 如果後端確認已登入，立刻清除之前殘留的訪客記憶，並顯示會員歡迎畫面
+                        sessionStorage.removeItem('isGuest');
+                        showWelcomeScreen({ name: data.user.name, isGuest: false });
+                        return; // 成功登入，直接結束函式
+                    }
+                }
+            } catch (error) {
+                console.warn('向後端檢查狀態失敗，將嘗試降級至訪客或登入選單:', error);
+            }
+
+            // 💡 只有當後端沒有登入紀錄時，才判斷先前是不是選了訪客模式
+            if (sessionStorage.getItem('isGuest') === 'true') {
+                showWelcomeScreen({ name: '訪客', isGuest: true });
+            } else {
+                // 既沒登入也不是訪客，顯示登入選單
+                showLoginScreen();
+            }
+        }
+
+        function handleGoogleLogin() { sessionStorage.removeItem('isGuest'); window.location.href = '/smart-transfer-system/login'; }
+        function logout() { window.location.href = '/smart-transfer-system/logout'; }
+
+        function applySorting() {
+            if (!currentSearchRoutes.length) return;
+            const criteria = document.getElementById('route-sort')?.value || 'time';
+
+            // 輔助函式：將 HH:MM 轉為分鐘數 (例如 "14:30" -> 870)
+            const timeToMin = (t) => {
+                const [h, m] = t.split(':').map(Number);
+                return h * 60 + m;
+            };
+
+            // 💡 新增輔助函式：計算真實總耗時 (包含跨夜防護)
+            // ✅ 修正後的安全程式碼
+            const getDuration = (route) => {
+                const depTime = timeToMin(route.segments[0].departure_time);
+                const arrTime = timeToMin(route.segments[route.segments.length - 1].arrival_time); // ✨ 修正為 route.segments
+                let duration = arrTime - depTime;
+                if (duration < 0) duration += 1440; 
+                return duration;
+            };
+
+            currentSearchRoutes.sort((a, b) => {
+                if (criteria === 'time') {
+                    // 🚀 核心修改：直接使用後端傳來的「絕對時間整數」相減
+                    // 這樣跨夜的 1452 絕對會排在當天的 1080 後面，完美解決跨夜 Bug
+                    return a.absolute_arrival_time - b.absolute_arrival_time;
+                }
+                if (criteria === 'price') {
+                    // 如果價格一樣，就用總耗時來分勝負
+                    return a.total_price - b.total_price || getDuration(a) - getDuration(b);
+                }
+                if (criteria === 'transfers') {
+                    // 如果轉乘次數一樣，就用總耗時來分勝負
+                    return a.transfer_count - b.transfer_count || getDuration(a) - getDuration(b);
+                }
+                if (criteria === 'duration') {
+                    // 💡 新增：純看哪一個搭車時間最短
+                    return getDuration(a) - getDuration(b);
+                }
+            });
+
+            renderSearchResults(currentSearchRoutes, currentOriginName, currentDestName);
+            document.getElementById('route-sort').value = criteria;
+            selectRouteOption(0);
+        }
+        let allSuggestionsData = []; 
+
+        function generateHistoryCardHtml(item) {
+            const isFav = item.type === 'favorite';
+            const borderColor = isFav ? '#C9896F' : '#EAEAEA';
+            const textColor = isFav ? '#C9896F' : '#8A857F';
+            const bgHover = isFav ? 'rgba(201, 137, 111, 0.05)' : 'rgba(126, 181, 179, 0.05)';
+            
+            const icon = isFav 
+                ? `<img src="/static/images/staricon.png" onclick="event.stopPropagation(); removeFavoriteFromSidebar('${item.start}', '${item.end}')" style="width: 16px; height: 16px; vertical-align: middle; cursor: pointer;" title="取消最愛">` 
+                : `<img src="/static/images/clockicon.png" style="width: 16px; height: 16px; vertical-align: middle;">`;
+
+            // 💡 核心修正：不看舊的 item.alias，直接拿車站 ID 去 ALL_STATIONS 庫比對最乾淨的中文原名
+            let startNameZh = "起點";
+            let endNameZh = "終點";
+            
+            if (typeof ALL_STATIONS !== 'undefined' && ALL_STATIONS.length > 0) {
+                const startStation = ALL_STATIONS.find(s => s.id === item.start || s.code === item.start);
+                const endStation = ALL_STATIONS.find(s => s.id === item.end || s.code === item.end);
+                if (startStation) startNameZh = startStation.name_zh;
+                if (endStation) endNameZh = endStation.name_zh;
+            } else if (item.alias) {
+                // 備用防呆：如果車站庫還沒好，才去切 alias
+                const parts = item.alias.split(' ➔ ');
+                if (parts.length === 2) {
+                    startNameZh = parts[0].replace(" Station", "").replace("火車站", "").replace("高鐵站", "");
+                    endNameZh = parts[1].replace(" Station", "").replace("火車站", "").replace("高鐵站", "");
+                }
+            }
+
+            // 依據當前語系即時生成最完美的顯示名稱
+            const cleanStart = formatStationName(item.start, startNameZh);
+            const cleanEnd = formatStationName(item.end, endNameZh);
+            const displayAlias = `${cleanStart} ➔ ${cleanEnd}`;
+            
+            // 傳給點擊事件 (applySuggestion) 的必須永遠是純中文的組合，確保後續 rawName 的安全
+            const rawChineseAlias = `${startNameZh} ➔ ${endNameZh}`;
+
+            return `
+                <div onclick="applySuggestion('${item.start}', '${item.end}', '${rawChineseAlias}')" class="train-row-card" data-fav="${isFav}"
+                    style="cursor: pointer; padding: 12px; border-left: 3px solid ${borderColor}; transition: all 0.2s;"
+                    onmouseover="this.style.background='${bgHover}'; this.style.transform='translateX(4px)';" 
+                    onmouseout="this.style.background=''; this.style.transform='translateX(0)';">
+                    <div class="history-record-text" style="font-size: 14px; font-weight: bold; color: ${textColor}; display: flex; align-items: center; gap: 8px;">
+                        ${icon} ${displayAlias}
+                    </div>
+                </div>`;
+        }
+        async function loadSuggestions() {
+            const container = document.getElementById('quick-suggestions-board');
+            if (!container) return;
+            
+            // 💡 取得當前語系
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            
+            let suggestions = [];
+            if (sessionStorage.getItem('isGuest') === 'true') {
+                const localFavs = JSON.parse(localStorage.getItem('smartTransitFavs') || '[]');
+                const localHist = JSON.parse(localStorage.getItem('smartTransitHistory') || '[]');
+                suggestions = [...localFavs];
+                const favPairs = new Set(localFavs.map(f => `${f.start}-${f.end}`));
+                localHist.forEach(h => { if (!favPairs.has(`${h.start}-${h.end}`)) suggestions.push(h); });
+            } else {
+                try {
+                    const res = await fetch(`${API_BASE}/api/suggestions`);
+                    if (res.ok) { const data = await res.json(); if (data.status === 'success') suggestions = data.data; }
+                } catch (e) {}
+            }
+
+            allSuggestionsData = suggestions;
+            const favorites = suggestions.filter(s => s.type === 'favorite');
+            const history = suggestions.filter(s => s.type !== 'favorite');
+            
+            let displayedItems = [...favorites, ...history.slice(0, Math.max(0, 4 - favorites.length))];
+            const hiddenCount = favorites.length + history.length - displayedItems.length;
+
+            if (displayedItems.length === 0) {
+                container.innerHTML = `<div style="color: #8A857F; font-size: 13px; text-align: center; padding: 20px;">${dict['history-none'] || '暫無紀錄，搜尋後將自動保存'}</div>`;
+                return;
+            }
+
+            let itemsHtml = displayedItems.map(generateHistoryCardHtml).join('');
+            let html = `<div class="history-scroll-area" style="display: flex; flex-direction: column; gap: 10px; max-height: 230px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin;">${itemsHtml}</div>`;
+            
+            // 💡 雙語化「查看全部歷史」按鈕
+            if (hiddenCount > 0) {
+                const viewAllText = lang === 'en' 
+                    ? `View all history (${hiddenCount} more)` 
+                    : `查看全部歷史 (還有 ${hiddenCount} 筆)`;
+                    
+                html += `<div onclick="toggleAllSuggestions()" style="cursor: pointer; padding: 12px; margin-top: 4px; text-align: center; border: 1px dashed #7EB5B3; border-radius: 8px; color: #7EB5B3; font-size: 13px; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(126, 181, 179, 0.1)';" onmouseout="this.style.background='';">${viewAllText}</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function toggleAllSuggestions() {
+            const container = document.getElementById('quick-suggestions-board');
+            // 💡 取得當前語系
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            if (container.dataset.expanded === 'true') {
+                loadSuggestions(); 
+                container.dataset.expanded = 'false';
+            } else {
+                let itemsHtml = allSuggestionsData.map(generateHistoryCardHtml).join('');
+                let html = `<div class="history-scroll-area" style="display: flex; flex-direction: column; gap: 10px; max-height: 230px; overflow-y: auto; padding-right: 4px; scrollbar-width: thin;">${itemsHtml}</div>`;
+                
+                // 💡 雙語化「收起歷史路線」按鈕
+                const hideText = lang === 'en' ? '▲ Hide history' : '▲ 收起歷史路線';
+                
+                html += `<div onclick="toggleAllSuggestions()" style="cursor: pointer; padding: 12px; margin-top: 4px; text-align: center; border: 1px dashed #A9A5A0; border-radius: 8px; color: #8A857F; font-size: 13px; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(126, 181, 179, 0.1)'; this.style.borderColor='#7EB5B3'; this.style.color='#7EB5B3';" onmouseout="this.style.background=''; this.style.borderColor='#A9A5A0'; this.style.color='#8A857F';">${hideText}</div>`;
+                container.innerHTML = html; 
+                container.dataset.expanded = 'true';
+            }
+        }
+        async function toggleFavoriteRoute(startId, endId, startName, endName) {
+            if (!startId || !endId) return;
+            const isGuest = sessionStorage.getItem('isGuest') === 'true';
+            const isCurrentlyFav = document.querySelector('.fav-toggle-btn')?.dataset.isfav === 'true';
+            
+            // 💡 取得當前語系
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+
+            if (isGuest) {
+                let localFavs = JSON.parse(localStorage.getItem('smartTransitFavs') || '[]');
+                if (isCurrentlyFav) {
+                    localStorage.setItem('smartTransitFavs', JSON.stringify(localFavs.filter(f => !(f.start === startId && f.end === endId))));
+                    updateFavButtonsState(false); 
+                    // 💡 只有這裡一個 alert
+                    alert(lang === 'en' ? " Removed from local favorites!" : " 已移除本機最愛！");
+                } else {
+                    if (localFavs.length >= 3) {
+                        return alert(lang === 'en' ? "Maximum 3 favorites allowed!" : "最愛最多 3 筆喔！");
+                    }
+                    localFavs.push({ type: 'favorite', start: startId, end: endId, alias: `${startName} ➔ ${endName}` });
+                    localStorage.setItem('smartTransitFavs', JSON.stringify(localFavs));
+                    updateFavButtonsState(true); 
+                    // 💡 只有這裡一個 alert
+                    alert(lang === 'en' ? " Added to local favorites!" : " 加入本機最愛！");
+                }
+                loadSuggestions(); 
+            } else {
+                const endpoint = isCurrentlyFav ? '/api/favorite/remove' : '/api/favorite/add';
+                const body = isCurrentlyFav ? { start: startId, end: endId } : { start: startId, end: endId, alias: `${startName} ➔ ${endName}` };
+                try {
+                    const res = await fetch(`${API_BASE}${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    const data = await res.json();
+                    if (data.status === 'success') {
+                        updateFavButtonsState(!isCurrentlyFav);
+                        // 💡 只有這裡一個 alert
+                        alert(isCurrentlyFav 
+                            ? (lang === 'en' ? " Removed from cloud favorites!" : " 已從雲端最愛移除！") 
+                            : (lang === 'en' ? " Successfully added to cloud favorites!" : " 成功加入雲端最愛！"));
+                        loadSuggestions();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) {
+                    console.error("更新最愛失敗:", e);
+                }
+            }
+        }
+        // ==========================================
+        // 💡 新增：專門給側邊欄星星使用的「取消最愛」函式
+        // ==========================================
+        async function removeFavoriteFromSidebar(startId, endId) {
+            const isGuest = sessionStorage.getItem('isGuest') === 'true';
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW'; // 💡 取得當前語系
+
+            if (isGuest) {
+                // 處理訪客模式 (LocalStorage)
+                let localFavs = JSON.parse(localStorage.getItem('smartTransitFavs') || '[]');
+                localFavs = localFavs.filter(f => !(f.start === startId && f.end === endId));
+                localStorage.setItem('smartTransitFavs', JSON.stringify(localFavs));
+                
+                // 💡 雙語化 alert
+                alert(lang === 'en' ? " Removed from local favorites!" : " 已移除本機最愛！");
+                loadSuggestions(); 
+                
+                if (document.getElementById("origin").value === startId && document.getElementById("destination").value === endId) {
+                    updateFavButtonsState(false);
+                }
+            } else {
+                // 處理登入模式 (呼叫後端 API)
+                try {
+                    const res = await fetch(`${API_BASE}/api/favorite/remove`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ start: startId, end: endId })
+                    });
+                    const data = await res.json();
+                    
+                    if (data.status === 'success') {
+                        // 💡 雙語化 alert
+                        alert(lang === 'en' ? " Removed from cloud favorites!" : " 已從雲端最愛移除！");
+                        loadSuggestions(); 
+                        
+                        if (document.getElementById("origin").value === startId && document.getElementById("destination").value === endId) {
+                            updateFavButtonsState(false);
+                        }
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) {
+                    console.error("移除最愛失敗:", e);
+                    alert(lang === 'en' ? "Connection error, please try again later." : "連線異常，請稍後再試。");
+                }
+            }
+        }
+        function updateFavButtonsState(isFav) {
+            // 💡 1. 取得當前語系
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            // 💡 2. 準備對應的文字
+            const favText = isFav 
+                ? (lang === 'en' ? 'Favorited' : '已在最愛')
+                : (lang === 'en' ? '☆ Favorite' : '☆ 設為最愛');
+
+            document.querySelectorAll('.fav-toggle-btn').forEach(btn => {
+                btn.dataset.isfav = isFav ? 'true' : 'false';
+                
+                // 💡 3. 將原本寫死的中文替換為 favText 變數
+                btn.innerHTML = isFav 
+                    ? `<img src="/static/images/staricon.png" style="width: 14px; height: 14px; vertical-align: text-bottom; margin-right: 4px;"> ${favText}` 
+                    : favText;
+                    
+                btn.style.background = isFav ? 'rgba(255, 157, 0, 0.1)' : 'transparent';
+                btn.style.borderColor = isFav ? '#ff9d00' : '#EAEAEA';
+                btn.style.color = isFav ? '#ff9d00' : '#8A857F';
+            });
+        }
+
+        function selectRouteOption(index) {
+            if (!currentSearchRoutes[index]) return;
+            drawRouteMap(currentSearchRoutes[index]);
+            
+            document.querySelectorAll('.route-card').forEach((card, idx) => {
+                const isSelected = idx === index;
+                card.classList.toggle('selected-route-card', isSelected);
+                
+                // 💡 新增：獲取這張卡片裡面的「中間段落」與「展開提示」
+                const middleSteps = card.querySelectorAll('.middle-step');
+                const indicator = card.querySelector('.expand-indicator');
+                
+                if (isSelected) {
+                    // 👉 如果是目前點擊選中的卡片：顯示所有明細，並把「展開提示」藏起來
+                    middleSteps.forEach(step => step.style.display = 'block');
+                    if (indicator) indicator.style.display = 'none';
+                } else {
+                    // 👉 如果是沒被點選的卡片：把中間段落折疊藏起來，並顯示「展開提示」
+                    middleSteps.forEach(step => step.style.display = 'none');
+                    if (indicator) indicator.style.display = 'block';
+                }
+            });
+        }
+
+        function getTrainTypeColor(trainType) {
+            if (trainType.includes('高鐵')) return '#C9896F';     
+            if (trainType.includes('自強')) return '#7EB5B3';    
+            if (trainType.includes('莒光')) return '#5A8E8D';    
+            if (trainType.includes('區間')) return '#A9A5A0';    
+            if (trainType.includes('轉乘') || trainType === '站內轉乘') return '#EAEAEA'; 
+            if (trainType.includes('公車')) return '#fbbf24';    
+            if (trainType.includes('計程車')) return '#f472b6';  
+            return '#7EB5B3'; 
+        }
+        
+        function drawRouteMap(routeObj) {
+            document.getElementById('taiwan-map-wrapper').style.display = 'block';
+
+            // 💡 取得當前語系
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+
+            if (!window.routeMap) {
+                window.routeMap = L.map('real-map').setView([23.6978, 120.9605], 7);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(window.routeMap);
+            }
+
+            setTimeout(() => window.routeMap.invalidateSize(), 100);
+            if (window.routeLayerGroup) window.routeMap.removeLayer(window.routeLayerGroup);
+            
+            window.routeLayerGroup = L.layerGroup().addTo(window.routeMap);
+            const latlngs = [];
+
+            if (!routeObj?.segments?.length) return;
+
+            const firstSegment = routeObj.segments[0];
+            const startCoord = DYNAMIC_COORDS[firstSegment.from_st_id];
+            
+            // 💡 翻譯起點標籤與站名
+            const fromStationStr = lang === 'en' ? (stationEnMap[firstSegment.from_station] || firstSegment.from_station) : firstSegment.from_station;
+            const lblOrigin = lang === 'en' ? 'Origin' : '起點';
+            const lblOriginShort = lang === 'en' ? 'Org' : '起';
+            const lblDep = lang === 'en' ? 'Dep:' : '出發:';
+
+            if (startCoord) {
+                const startLatLng = [startCoord.lat, startCoord.lng];
+                latlngs.push(startLatLng);
+                L.circleMarker(startLatLng, { radius: 8, fillColor: "#7EB5B3", color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.9 }).addTo(window.routeLayerGroup)
+                .bindTooltip(`<div style="font-family: 'Noto Sans TC', sans-serif; color: #5A5550;"><b style="color: #7EB5B3; font-size: 14px;"><img src="/static/images/flagicon.png" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px; object-fit: contain;">${lblOrigin}</b><br><strong style="font-size: 15px;">${fromStationStr}</strong><br><div style="font-size: 12px; margin-top: 4px; color: #8A857F;"><img src="/static/images/clockicon.png" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px; object-fit: contain;">${lblDep} <strong style="color: #5A5550">${firstSegment.departure_time}</strong></div></div>`, { className: 'map-tooltip', direction: 'top', offset: [0, -20] });
+                L.tooltip({ permanent: true, direction: 'top', className: 'map-label', offset: [0, -15] }).setContent(`<span style="color: #7EB5B3; font-weight: bold;">${lblOriginShort}</span> ${fromStationStr}`).setLatLng(startLatLng).addTo(window.routeLayerGroup);
+            }
+
+            routeObj.segments.forEach((seg, idx) => {
+                const coord = DYNAMIC_COORDS[seg.to_st_id];
+                if (coord && seg.from_station !== seg.to_station) {
+                    const latLng = [coord.lat, coord.lng];
+                    latlngs.push(latLng);
+
+                    const isLast = idx === routeObj.segments.length - 1;
+                    const markerColor = isLast ? '#C9896F' : '#7EB5B3'; 
+                    
+                    // 💡 翻譯中繼站/終點與各項明細標籤
+                    const toStationStr = lang === 'en' ? (stationEnMap[seg.to_station] || seg.to_station) : seg.to_station;
+                    const lblDest = isLast ? (lang === 'en' ? 'Destination' : '終點') : (lang === 'en' ? 'Transfer' : '中繼站');
+                    const lblDestShort = isLast ? (lang === 'en' ? 'Dest' : '終') : (lang === 'en' ? 'Via' : '過');
+                    const lblType = lang === 'en' ? 'Type:' : '車種:';
+                    const lblTrainNo = lang === 'en' ? 'No.:' : '車次:';
+                    const lblArr = lang === 'en' ? 'Arr:' : '抵達:';
+                    const lblPrice = lang === 'en' ? 'Price:' : '票價:';
+                    
+                    // 翻譯車種 (使用我們在上一回合新增的 translateTrainType 函式)
+                    const trainTypeStr = (typeof translateTrainType === 'function') ? translateTrainType(seg.train_type, lang) : seg.train_type;
+                    const trainNoStr = seg.train_number || (lang === 'en' ? 'Transfer' : '轉乘');
+                    
+                    L.circleMarker(latLng, { radius: 6, fillColor: markerColor, color: "#fff", weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(window.routeLayerGroup)
+                    .bindTooltip(`<div style="font-family: 'Noto Sans TC', sans-serif; color: #5A5550; min-width: 200px;"><b style="color: ${markerColor}; font-size: 16px;"><img src="/static/images/flagicon.png" style="width: 20px; height: 20px; vertical-align: middle; margin-right: 4px; object-fit: contain;">${lblDest}</b><br><strong>${toStationStr}</strong><br><hr style="border: none; border-top: 1px solid #EAEAEA; margin: 8px 0;"><div style="font-size: 13px; color: #8A857F;"><div>${lblType} <strong style="color: ${getTrainTypeColor(seg.train_type)}">${trainTypeStr}</strong></div><div>${lblTrainNo} <strong style="color: #5A5550">${trainNoStr}</strong></div><div>${lblArr} <strong style="color: #5A5550">${seg.arrival_time}</strong></div><div>${lblPrice} <strong style="color: #7EB5B3">$${seg.price}</strong></div></div></div>`, { className: 'map-tooltip', direction: 'top', offset: [0, -10] });
+                    
+                    if (isLast) L.tooltip({ permanent: true, direction: 'top', className: 'map-label', offset: [0, -10] }).setContent(`<span style="color: ${markerColor}; font-weight: bold;">${lblDestShort}</span> ${toStationStr}`).setLatLng(latLng).addTo(window.routeLayerGroup);
+                }
+
+                if (seg.geo_path?.length > 1) {
+                    L.polyline(seg.geo_path, { color: getTrainTypeColor(seg.train_type), weight: 4, opacity: 0.8, lineCap: 'round', lineJoin: 'round' }).addTo(window.routeLayerGroup);
+                    seg.geo_path.forEach(c => latlngs.push(c));
+                }
+            });
+
+            if (latlngs.length > 1) window.routeMap.fitBounds(latlngs, { padding: [50, 50] });
+        }
+        // ==========================================
+        // ==========================================
+        // 工具函式：前端網頁版的同車次路徑壓縮合併
+        // ==========================================
+        // 原本就有的時間轉換工具
+        function minToTime(m) {
+            if (m >= 1440) m -= 1440;
+            return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+        }
+        // 🕒 專門給 UI 渲染使用的雙語時間轉換器（不影響底層數據計算）
+        function formatTimeDisplay(timeStr) {
+            if (!timeStr || !timeStr.includes(':')) return timeStr;
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            
+            const parts = timeStr.split(':');
+            let hours = parseInt(parts[0], 10);
+            const minutes = parts[1].substring(0, 2);
+            
+            if (isNaN(hours)) return timeStr;
+            
+            const isPm = hours >= 12;
+            const hours12 = hours % 12 === 0 ? 12 : hours % 12;
+            
+            if (lang === 'en') {
+                const suffix = isPm ? 'PM' : 'AM';
+                return `${hours12}:${minutes} ${suffix}`;
+            } else {
+                const suffix = isPm ? '下午' : '上午';
+                return `${suffix} ${String(hours12).padStart(2, '0')}:${minutes}`;
+            }
+        }
+        // 💡 補上前端版的壓縮工具
+        function compressPath(rawSteps) {
+            if (!rawSteps || rawSteps.length === 0) return [];
+            let compressed = [];
+            let current = JSON.parse(JSON.stringify(rawSteps[0])); 
+            current.all_stops = [current.from_st, current.to_st];
+
+            for (let i = 1; i < rawSteps.length; i++) {
+                let step = rawSteps[i];
+                if (!step.is_transfer && !current.is_transfer && step.train_no === current.train_no) {
+                    current.to_st = step.to_st;               
+                    current.arr_time = step.arr_time;         
+                    current.cost += step.cost;                
+                    current.all_stops.push(step.to_st);       
+                } else {
+                    compressed.push(current);
+                    current = JSON.parse(JSON.stringify(step));
+                    current.all_stops = [current.from_st, current.to_st];
+                }
+            }
+            compressed.push(current);
+            return compressed;
+        }
+        // ==========================================
+        // 💡 [上策] TDX 真實軌跡解析與幾何裁切引擎
+        // ==========================================
+        
+        function parseWKT(wkt) {
+            if (!wkt) return [];
+            const matches = wkt.match(/[\d\.]+\s+[\d\.]+/g);
+            if (!matches) return [];
+            return matches.map(pt => {
+                const parts = pt.trim().split(/\s+/);
+                return [parseFloat(parts[1]), parseFloat(parts[0])];
+            });
+        }
+
+        function sliceRealShape(shapeArray, startCoord, endCoord) {
+            if (!shapeArray || shapeArray.length === 0) return null;
+            let startIdx = 0, minStart = Infinity;
+            let endIdx = 0, minEnd = Infinity;
+            
+            shapeArray.forEach((pt, idx) => {
+                let d1 = Math.pow(pt[0] - startCoord.lat, 2) + Math.pow(pt[1] - startCoord.lng, 2);
+                if (d1 < minStart) { minStart = d1; startIdx = idx; }
+                let d2 = Math.pow(pt[0] - endCoord.lat, 2) + Math.pow(pt[1] - endCoord.lng, 2);
+                if (d2 < minEnd) { minEnd = d2; endIdx = idx; }
+            });
+            
+            if (startIdx <= endIdx) {
+                return shapeArray.slice(startIdx, endIdx + 1);
+            } else {
+                return shapeArray.slice(endIdx, startIdx + 1).reverse();
+            }
+        }
+        // ==========================================
+        // 💡 核心替換目標：地圖軌跡智慧繪製 (上策融合版)
+        // ==========================================
+        function getFilledGeoPath(all_stops, train_type) {
+            if (!all_stops || all_stops.length < 2) return [];
+            
+            // 🚀 高鐵優先呼叫真實幾何軌跡
+            if (train_type.includes('高鐵') && typeof REAL_SHAPES !== 'undefined' && REAL_SHAPES.thsr && REAL_SHAPES.thsr.length > 0) {
+                const startCoord = DYNAMIC_COORDS[all_stops[0]];
+                const endCoord = DYNAMIC_COORDS[all_stops[all_stops.length - 1]];
+                if (startCoord && endCoord) {
+                    const realPath = sliceRealShape(REAL_SHAPES.thsr, startCoord, endCoord);
+                    if (realPath) {
+                        return [[startCoord.lat, startCoord.lng], ...realPath, [endCoord.lat, endCoord.lng]];
+                    }
+                }
+            }
+            
+            let detailedPath = [];
+            const getLine = name => STATION_LINES[name] || [];
+            
+            const lineNorth = getLine("西部幹線-縱貫線(北段)");
+            const lineMountain = getLine("西部幹線-台中線/山線");
+            const lineSea = getLine("西部幹線-海岸線/海線");
+            const lineSouth = getLine("西部幹線-縱貫線(南段)");
+            const linePingtung = getLine("屏東線");
+            const lineSouthLink = JSON.parse(JSON.stringify(getLine("南迴線")));
+            
+            const fsIdx = lineSouthLink.findIndex(s => s.name_zh === "枋山" || s.code === "TRA_5160");
+            const dwIdx = lineSouthLink.findIndex(s => s.name_zh === "大武" || s.code === "TRA_5190");
+            const nsIdx = lineSouthLink.findIndex(s => s.name_zh === "內獅" || s.code === "TRA_5130");
+            const jlIdx = lineSouthLink.findIndex(s => s.name_zh === "加祿" || s.code === "TRA_5120");
+
+            if (fsIdx !== -1 && dwIdx !== -1 && dwIdx > fsIdx) {
+                // 🚄 南迴線彎道座標
+                DYNAMIC_COORDS["TRA_CURVE_01"] = {lat: 22.3597, lng: 120.6088}; 
+                DYNAMIC_COORDS["TRA_CURVE_02"] = {lat: 22.3530, lng: 120.6101}; 
+                DYNAMIC_COORDS["TRA_CURVE_03"] = {lat: 22.3058, lng: 120.6439}; 
+                DYNAMIC_COORDS["TRA_CURVE_04"] = {lat: 22.2856, lng: 120.6464}; 
+                DYNAMIC_COORDS["TRA_CURVE_05"] = {lat: 22.2796, lng: 120.6498}; 
+                DYNAMIC_COORDS["TRA_CURVE_06"] = {lat: 22.2746, lng: 120.6507}; 
+                DYNAMIC_COORDS["TRA_CURVE_07"] = {lat: 22.2653, lng: 120.6679}; 
+                DYNAMIC_COORDS["TRA_CURVE_08"] = {lat: 22.2677, lng: 120.6759}; 
+                DYNAMIC_COORDS["TRA_CURVE_09"] = {lat: 22.2741, lng: 120.6844}; 
+                DYNAMIC_COORDS["TRA_CURVE_10"] = {lat: 22.2801, lng: 120.6881}; 
+                DYNAMIC_COORDS["TRA_CURVE_11"] = {lat: 22.2825, lng: 120.6937}; 
+                DYNAMIC_COORDS["TRA_CURVE_12"] = {lat: 22.2801, lng: 120.7019}; 
+                DYNAMIC_COORDS["TRA_CURVE_13"] = {lat: 22.2774, lng: 120.7118}; 
+                DYNAMIC_COORDS["TRA_CURVE_14"] = {lat: 22.2840, lng: 120.7237}; 
+                DYNAMIC_COORDS["TRA_CURVE_15"] = {lat: 22.2757, lng: 120.7369}; 
+                DYNAMIC_COORDS["TRA_CURVE_16"] = {lat: 22.2975, lng: 120.8338}; 
+                DYNAMIC_COORDS["TRA_CURVE_17"] = {lat: 22.3343, lng: 120.8626}; 
+                DYNAMIC_COORDS["TRA_CURVE_18"] = {lat: 22.3446, lng: 120.8768}; 
+                DYNAMIC_COORDS["TRA_CURVE_19"] = {lat: 22.3531, lng: 120.8845}; 
+                DYNAMIC_COORDS["TRA_CURVE_20"] = {lat: 22.3556, lng: 120.8895}; 
+
+                // 💡 徹底修正：依照地理位置，由南往北分段安插
+                if (fsIdx !== -1) {
+                    lineSouthLink.splice(fsIdx + 1, 0,
+                        { code: "TRA_CURVE_07" },
+                        { code: "TRA_CURVE_08" }, { code: "TRA_CURVE_09" },
+                        { code: "TRA_CURVE_10" }, { code: "TRA_CURVE_11" },
+                        { code: "TRA_CURVE_12" }, { code: "TRA_CURVE_13" },
+                        { code: "TRA_CURVE_14" }, { code: "TRA_CURVE_15" },
+                        { code: "TRA_CURVE_16" }, { code: "TRA_CURVE_17" },
+                        { code: "TRA_CURVE_18" }, { code: "TRA_CURVE_19" },
+                        { code: "TRA_CURVE_20" }
+                    );
+                }
+            }
+
+            // 🚄 北迴線清水斷崖特殊彎角
+            // 🚄 北迴線清水斷崖特殊彎角 (修正為東岸經度 121)
+            DYNAMIC_COORDS["TRA_CURVE_30"] = {lat: 24.205, lng: 121.6980}; 
+            DYNAMIC_COORDS["TRA_CURVE_31"] = {lat: 24.188, lng: 121.6880}; 
+            DYNAMIC_COORDS["TRA_CURVE_32"] = {lat: 24.178, lng: 121.6800}; 
+            DYNAMIC_COORDS["TRA_CURVE_33"] = {lat: 24.185, lng: 121.6720};
+
+            const lineEastRift = [...getLine("台東線/花東線")];
+            const lineNorthLink = [...getLine("北迴線")];
+            const lineYilan = [...getLine("宜蘭線")];
+            const lineShenao = getLine("深澳線");
+            const lineNeiwan = getLine("內灣線");
+
+            const hejenIdx = lineNorthLink.findIndex(s => s.name_zh === "和仁");
+            const chongdeIdx = lineNorthLink.findIndex(s => s.name_zh === "崇德");
+            if (hejenIdx !== -1 && chongdeIdx !== -1 && chongdeIdx > hejenIdx) {
+                lineNorthLink.splice(hejenIdx + 1, 0,
+                    { code: "TRA_CURVE_30" }, { code: "TRA_CURVE_31" },
+                    { code: "TRA_CURVE_32" }, { code: "TRA_CURVE_33" }
+                );
+            }
+
+            const tra_seq_mountain = [...lineNorth, ...lineMountain, ...lineSouth, ...linePingtung, ...lineSouthLink].map(s => s.code);
+            const tra_seq_sea = [...lineNorth, ...lineSea, ...(lineMountain.length ? [lineMountain[lineMountain.length - 1]] : []), ...lineSouth, ...linePingtung, ...lineSouthLink].map(s => s.code);
+
+            const baduIdx = lineNorth.findIndex(s => s.name_zh === "八堵");
+            const northToBadu = baduIdx !== -1 ? lineNorth.slice(baduIdx).reverse() : lineNorth.slice().reverse();
+            
+            const tra_seq_east_ring = [...northToBadu, ...lineYilan, ...lineNorthLink, ...lineEastRift, ...lineSouthLink.slice().reverse(), ...linePingtung.slice().reverse(), ...lineSouth.slice().reverse()].map(s => s.code);
+
+            const idxZhongzhou = lineSouth.findIndex(s => s.name_zh === "中洲");
+            const southToZhongzhou = idxZhongzhou !== -1 ? lineSouth.slice(0, idxZhongzhou + 1) : lineSouth;
+            const tra_seq_shalun = [...southToZhongzhou, ...getLine("沙崙線")].map(s => s.code);
+
+            const idxHsinchu = lineNorth.findIndex(s => s.name_zh === "新竹");
+            const northToHsinchu = idxHsinchu !== -1 ? lineNorth.slice(0, idxHsinchu + 1) : lineNorth;
+            const tra_seq_liujia = [...northToHsinchu, ...getLine("六家線")].map(s => s.code);
+            const tra_seq_neiwan = [...northToHsinchu, ...getLine("內灣線")].map(s => s.code);
+
+            const idxErshui = lineSouth.findIndex(s => s.name_zh === "二水");
+            const southToErshui = idxErshui !== -1 ? lineSouth.slice(0, idxErshui + 1) : lineSouth;
+            const tra_seq_jiji = [...southToErshui, ...getLine("集集線")].map(s => s.code);
+
+            const idxSandiaoling = lineYilan.findIndex(s => s.name_zh === "三貂嶺");
+            const yilanToSandiaoling = idxSandiaoling !== -1 ? lineYilan.slice(0, idxSandiaoling + 1) : lineYilan;
+            const tra_seq_pingxi = [...yilanToSandiaoling, ...getLine("平溪線")].map(s => s.code);
+
+            DYNAMIC_COORDS["TRA_CURVE_50"] = {lat: 25.11010, lng: 121.80400};
+            DYNAMIC_COORDS["TRA_CURVE_51"] = {lat: 25.11257, lng: 121.79992};
+            DYNAMIC_COORDS["TRA_CURVE_52"] = {lat: 25.11510, lng: 121.79862};
+            DYNAMIC_COORDS["TRA_CURVE_53"] = {lat: 25.11833, lng: 121.79878};
+            DYNAMIC_COORDS["TRA_CURVE_54"] = {lat: 25.12260, lng: 121.79786};
+            DYNAMIC_COORDS["TRA_CURVE_55"] = {lat: 25.12596, lng: 121.79510};
+            DYNAMIC_COORDS["TRA_CURVE_56"] = {lat: 25.13019, lng: 121.79938};
+            DYNAMIC_COORDS["TRA_CURVE_57"] = {lat: 25.13234, lng: 121.79831};
+            DYNAMIC_COORDS["TRA_CURVE_58"] = {lat: 25.13356, lng: 121.79777};
+            DYNAMIC_COORDS["TRA_CURVE_59"] = {lat: 25.13405, lng: 121.79671};
+            DYNAMIC_COORDS["TRA_CURVE_60"] = {lat: 25.13446, lng: 121.79609};
+            DYNAMIC_COORDS["TRA_CURVE_61"] = {lat: 25.13474, lng: 121.79671};
+            DYNAMIC_COORDS["TRA_CURVE_62"] = {lat: 25.13542, lng: 121.79623};
+            DYNAMIC_COORDS["TRA_CURVE_63"] = {lat: 25.13643, lng: 121.79621};
+            DYNAMIC_COORDS["TRA_CURVE_64"] = {lat: 25.13550, lng: 121.80050};
+            DYNAMIC_COORDS["TRA_CURVE_65"] = {lat: 25.13530, lng: 121.80200};
+            DYNAMIC_COORDS["TRA_CURVE_66"] = {lat: 25.13444, lng: 121.80194};
+
+            const haikeguanIdx = lineShenao.findIndex(s => s.name_zh === "海科館");
+            const badouziIdx = lineShenao.findIndex(s => s.name_zh === "八斗子");
+            const ruifangStation = lineShenao.find(s => s.name_zh === "瑞芳") || { code: "TRA_7360" };
+            let tra_seq_shenao;
+            if (haikeguanIdx !== -1 && badouziIdx !== -1) {
+                tra_seq_shenao = [
+                    ruifangStation,
+                    { code: "TRA_CURVE_50" }, { code: "TRA_CURVE_51" }, { code: "TRA_CURVE_52" }, { code: "TRA_CURVE_53" },
+                    { code: "TRA_CURVE_54" }, { code: "TRA_CURVE_55" }, { code: "TRA_CURVE_56" }, { code: "TRA_CURVE_57" },
+                    { code: "TRA_CURVE_58" }, { code: "TRA_CURVE_59" }, { code: "TRA_CURVE_60" }, { code: "TRA_CURVE_61" },
+                    { code: "TRA_CURVE_62" }, { code: "TRA_CURVE_63" },
+                    ...lineShenao.slice(haikeguanIdx, badouziIdx + 1)
+                ].map(s => s.code);
+            } else {
+                tra_seq_shenao = lineShenao.map(s => s.code);
+            }
+
+            const thsr_seq = [
+                "THSR_0900", "THSR_1000", "THSR_1010", "THSR_1020", "THSR_1030",
+                "THSR_1035", "THSR_1040", "THSR_1043", "THSR_1047", "THSR_1050",
+                "THSR_1060", "THSR_1070"
+            ];
+
+            const seqs = train_type.includes('高鐵')
+                ? [thsr_seq]
+                : [tra_seq_mountain, tra_seq_sea, tra_seq_east_ring, tra_seq_shalun, tra_seq_liujia, tra_seq_neiwan, tra_seq_jiji, tra_seq_pingxi, tra_seq_shenao];
+            
+            const isRuifangToHaikeguan = (a, b) => (a === "TRA_7360" && b === "TRA_7361") || (a === "TRA_7361" && b === "TRA_7360");
+            const isHaikeguanToBadouzi = (a, b) => (a === "TRA_7361" && b === "TRA_7362") || (a === "TRA_7362" && b === "TRA_7361");
+
+            for (let i = 0; i < all_stops.length - 1; i++) {
+                let stA = all_stops[i];
+                let stB = all_stops[i+1];
+                detailedPath.push(stA);
+
+                if (isRuifangToHaikeguan(stA, stB)) {
+                    let curves = [
+                        "TRA_CURVE_50","TRA_CURVE_51","TRA_CURVE_52","TRA_CURVE_53","TRA_CURVE_54",
+                        "TRA_CURVE_55","TRA_CURVE_56","TRA_CURVE_57","TRA_CURVE_58","TRA_CURVE_59",
+                        "TRA_CURVE_60","TRA_CURVE_61","TRA_CURVE_62","TRA_CURVE_63"
+                    ];
+                    // 💡 如果是從海科館(7361)開往瑞芳(7360)，陣列倒轉
+                    if (stA === "TRA_7361") curves.reverse();
+                    
+                    detailedPath.push(...curves);
+                    continue;
+                }
+                if (isHaikeguanToBadouzi(stA, stB)) {
+                    let curves = ["TRA_CURVE_64","TRA_CURVE_65"];
+                    // 💡 如果是從八斗子(7362)開往海科館(7361)，陣列倒轉
+                    if (stA === "TRA_7362") curves.reverse();
+                    
+                    detailedPath.push(...curves);
+                    continue;
+                }
+
+                let found = false;
+                for (let seq of seqs) {
+                    let idxA = seq.indexOf(stA);
+                    let idxB = seq.indexOf(stB);
+                    if (idxA !== -1 && idxB !== -1 && Math.abs(idxA - idxB) > 1) {
+                        // 🚀 直接依賴 step 來決定正向或反向抓取中繼站即可
+                        let step = idxA < idxB ? 1 : -1;
+                        for (let j = idxA + step; j !== idxB; j += step) {
+                            detailedPath.push(seq[j]);
+                        }
+                        found = true;
+                        break; 
+                    }
+                }
+            }
+            detailedPath.push(all_stops[all_stops.length - 1]);
+
+            const rawCoords = [...new Set(detailedPath)].map(st_id => {
+                const coord = DYNAMIC_COORDS[st_id];
+                return coord ? { lat: coord.lat, lng: coord.lng, id: st_id } : null;
+            }).filter(c => c !== null);
+
+            const subdiv = 5; 
+            const result = [];
+            for (let i = 0; i < rawCoords.length; i++) {
+                if (i === 0) {
+                    result.push([rawCoords[0].lat, rawCoords[0].lng]);
+                    continue;
+                }
+                const p0 = rawCoords[Math.max(0, i - 2)];
+                const p1 = rawCoords[i - 1];
+                const p2 = rawCoords[i];
+                const p3 = rawCoords[Math.min(rawCoords.length - 1, i + 1)];
+                for (let t = 1; t <= subdiv; t++) {
+                    const tt = t / subdiv;
+                    const t2 = tt * tt;
+                    const t3 = t2 * tt;
+                    const lat = 0.5 * ((2 * p1.lat) +
+                        (-p0.lat + p2.lat) * tt +
+                        (2 * p0.lat - 5 * p1.lat + 4 * p2.lat - p3.lat) * t2 +
+                        (-p0.lat + 3 * p1.lat - 3 * p2.lat + p3.lat) * t3);
+                    const lng = 0.5 * ((2 * p1.lng) +
+                        (-p0.lng + p2.lng) * tt +
+                        (2 * p0.lng - 5 * p1.lng + 4 * p2.lng - p3.lng) * t2 +
+                        (-p0.lng + 3 * p1.lng - 3 * p2.lng + p3.lng) * t3);
+                    result.push([lat, lng]);
+                }
+            }
+            return result;
+        }
+        function enterApp() {
+            const intro = document.getElementById('intro-overlay');
+            
+            // 💡 改成 sessionStorage，這樣關閉分頁後紀錄就會自動消失
+            sessionStorage.setItem('introSeen', 'true'); // 💡 改成 sessionStorage
+            
+            if (intro) {
+                intro.style.zIndex = '10000'; 
+                checkAuth().catch(e => console.warn('checkAuth失敗:', e));
+            }
+        }
+        async function loadLiveBoard(stationName = '民雄') {
+            const container = document.getElementById('real-live-board');
+            if (!container) return;
+            const lang = localStorage.getItem('smartTransitLang') || 'zh-TW';
+            const dict = i18n[lang] || i18n['zh-TW'];
+            
+            // 1. 動態更新標題站名
+            const stationDisplay = document.getElementById('live-board-station');
+            if (stationDisplay) {
+                stationDisplay.dataset.rawName = stationName;
+                if (lang === 'en') {
+                    const enName = stationEnMap[stationName] || stationName; 
+                    stationDisplay.textContent = `${enName} Station`;
+                } else {
+                    stationDisplay.textContent = `${stationName}車站`;
+                }
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/liveboard?station=${stationName}`);
+                const data = await res.json();
+                
+                if (data.status === 'success' && data.data.length > 0) {
+                    container.innerHTML = data.data.sort((a, b) => a.ScheduledArrivalTime.localeCompare(b.ScheduledArrivalTime)).slice(0, 2).map(train => {
+                        const delay = train.DelayTime;
+                        
+                        // 💡 2. 查字典拿文字
+                        const textOnTime = dict['live-ontime'] || '準點';
+                        const textDelayPre = dict['live-delay'] || '晚 ';
+                        const textDelaySuf = dict['live-delay-suf'] || ' 分';
+                        const dirText = train.Direction === 0 ? (dict['live-dir-0'] || '順行') : (dict['live-dir-1'] || '逆行');
+                        const trainNoText = `${dict['live-train-no'] || '車次'} ${train.TrainNo}`;
+                        
+                        // 目的地嘗試抓英文站名
+                        const destName = lang === 'en' && train.EndingStationName.En ? train.EndingStationName.En : train.EndingStationName.Zh_tw;
+                        const toText = `${dict['live-to'] || '往'} ${destName}`;
+
+                        // 💡 3. 組裝延遲標籤
+                        const delayHtml = delay === 0 
+                            ? `<div class="train-delay" style="background: rgba(126, 181, 179, 0.1); color: #7EB5B3; font-weight: bold; border: none; padding: 4px 8px; border-radius: 4px; display: inline-block; width: fit-content; white-space: nowrap;">${textOnTime}</div>`
+                            : `<div class="train-delay" style="background: rgba(201, 137, 111, 0.1); color: #C9896F; font-weight: bold; border: none; padding: 4px 8px; border-radius: 4px; display: inline-block; width: fit-content; white-space: nowrap;">${textDelayPre}${delay}${textDelaySuf}</div>`;
+                        
+                        return `
+                        <div class="train-row-card">
+                            <div class="train-time" style="color: #5A5550; font-size: 18px; font-weight: bold; margin-right: 12px;">
+                                ${train.ScheduledArrivalTime.substring(0, 5)}
+                            </div>
+                            <div class="train-meta" style="display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span class="badge" style="color: #546E7A; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(84, 110, 122, 0.3); font-size: 11px; font-weight: bold; display: inline-block; width: fit-content; white-space: nowrap;">
+                                        ${dirText}
+                                    </span>
+                                    <span class="train-no" style="color: #8A857F; font-size: 13px; font-weight: bold;">${trainNoText}</span>
+                                </div>
+                                <span class="station-dest" style="color: #5A5550; font-size: 14px; font-weight: bold;">${toText}</span>
+                            </div>
+                            ${delayHtml}
+                        </div>`;
+                    }).join('');
+                } else {
+                    container.innerHTML = `<div style="color: #A9A5A0; font-size: 13px; text-align: center; padding: 10px;">${dict['live-none'] || '目前無近期列車進站'}</div>`;
+                }
+            } catch (e) { 
+                container.innerHTML = `<div style="color: #C9896F; font-size: 13px; text-align: center; padding: 10px;">${dict['live-error'] || '連線台鐵伺服器失敗'}</div>`; 
+            }
+        }
+    </script>
+        <div id="random-dice-btn" onclick="rollRandomDestination()" data-i18n-title="dice-tooltip" title="不知道去哪？擲骰子決定！" 
+             style="position: fixed; bottom: 30px; right: 30px; width: 56px; height: 56px; background: #FFF; border: 3px solid #7EB5B3; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 1000; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);" 
+             onmouseover="this.style.transform='rotate(360deg) scale(1.15)';" 
+             onmouseout="this.style.transform='rotate(0deg) scale(1)';">
+            <span style="font-size: 28px; line-height: 1; margin-top: 2px;">🎲</span>
+        </div>
+</body>
+</html>
